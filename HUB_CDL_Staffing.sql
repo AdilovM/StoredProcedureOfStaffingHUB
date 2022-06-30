@@ -14,7 +14,7 @@ ALTER procedure [dbo].[HUB_sp_CDL_Staffing_MA]
 as
 
   INSERT INTO rrd.dbo.HUBDependencyRefreshCheck (HUB_Name) SELECT 'HUB_CDL_Staffing' -- ae 06042019
-  
+
   /*ERROR INSERT NOT IN THIS PROCEDURE DUE TO THE HR TABLES THAT GET UPDATED BY DELTAS*/
 
 --=============================================================================================================================
@@ -38,12 +38,12 @@ SELECT
 	EmploymentStatus,
 	Period,
 	GETDATE() AS RunDateTime
-	
+
 INTO #LOA
 
 FROM rrd.dbo.HUB_CDL_Staffing (NOLOCK)
 
-WHERE 
+WHERE
 Period = CONVERT(VARCHAR(6),GETDATE()-1,112) and
 TitleGrouping in ('Account Executive', 'Loan Officer') and
 EmploymentStatus = 'LOA'
@@ -58,7 +58,7 @@ SELECT * FROM #LOA
 If OBJECT_ID('tempdb..#AELicense') Is Not Null
 drop table #AELicense
 
-Select 
+Select
 distinct
 IndividualId,
 FirstName + ' ' + LastName as OfficerName
@@ -96,6 +96,10 @@ Where OfficerName = 'Roberto Arias Gonzalez'
 Update #AELicense
 Set OfficerName = 'Timothy Ortiz'
 Where OfficerName = 'Timmy Ortiz'
+-------------------------------------------------------------------------------------------------------------------------------
+Update #AELicense
+Set OfficerName = 'ABC CBA'
+Where OfficerName = 'XYZ'
 --=============================================================================================================================
 --========================HUB TEMP TABLE=======================================================================================
 --=============================================================================================================================
@@ -154,7 +158,7 @@ PurchaseFlag char(1),
 HelocFlag char(1),
 SLPTeamFlag char(1),
 Period int,
-DepartmentId int, 
+DepartmentId int,
 TrainingStartDate date,
 TrainingEndDate date,
 LOAEndDate DATE,
@@ -172,7 +176,7 @@ SpecialProjectsFlag CHAR(1),
 CDLSales CHAR(1),
 CSRFlag CHAR(1),
 --INSERT NEW FIELD NAME HERE WITH DATATYPE NEXT TO IT (First of 3 sections to include)
-WorkStateName CHAR(100),--field was added on 1/20/21 
+WorkStateName CHAR(100),--field was added on 1/20/21
 CDLSales_CollegeLOProgram CHAR(1),
 TrainingClass INT,
 CDLAgentType VARCHAR(100),
@@ -191,8 +195,8 @@ While @period <= rrd.dbo.udf_MonthYear_Int(GetDate())
 BEGIN
 
 Insert into #EmpTemp
- 
-Select 
+
+Select
 EmployeeId,
 NetworkLogin,
 ltrim(rtrim(
@@ -213,7 +217,7 @@ cast(case
 	 end as numeric(18,0)) as OfficePhoneExtension,
 ManagerId,
 ISNULL(case
-		when PreferredName in ('Merrill Tapia','Richard Helali','Adam Adoree','Alfred Wiggins') 
+		when PreferredName in ('Merrill Tapia','Richard Helali','Adam Adoree','Alfred Wiggins')
 		and @period between 201409 and 201506 and ManagerName = 'Grant Mills' then 'Grant Mills Non-Neg Eq'
 		when PreferredName in ('Shelly Begue') and EmploymentStatus = 'Active' and ManagerName = 'Grant Mills' then 'Grant Mills Non-Neg Eq'
 		else ManagerName
@@ -243,30 +247,30 @@ case
     when PreferredName in ('Fredrick Weaver', 'Brian Davidson') and @period >= 201702 then 'Account Executive'
 	----THIS IS WHAT WE NEED TO UPDATE ONCE WE HAVE THE REPORTS UPDATE APPROPRIATELY
 	--when Title in ('Specialist, Leads Support') then 'Dispatch Agent'
-	
+
 	when Title in ('Specialist, Leads Support', 'Specialist I, Lead', 'Specialist II, Lead', 'Specialist I, Leads Support', 'Specialist II, Leads Support') and OfficeLocation2 like '%Atlanta%' and @period < 201904 then 'Dispatch Agent - Infosys'
 	when OfficeLocation2 like '%Atlanta%' and @period < 201904 then 'Dispatch Agent - Infosys'
-	
-	
+
+
 	when (Title in ('Specialist, Leads Support', 'Specialist I, Lead', 'Specialist II, Lead', 'Specialist II, Lead ', 'Specialist I, Leads Support', 'Specialist II, Leads Support')
-		or Title like 'Specialist II, Lead%' or Title like 'Specialist I, Lead%' or Title like 'Spec I, Lead%' 
+		or Title like 'Specialist II, Lead%' or Title like 'Specialist I, Lead%' or Title like 'Spec I, Lead%'
 		or Title like '%Spec%II%Lead%' or Title like '%Spec%I%Lead%') and (ManagerEmail not in ('glenn.boyd@pnmac.com') or ManagerEmail is null) and EmployeeId not like 'O%'
 		then 'Dispatch Agent'  --- ae changed 4/11/18, KP hangout
 	/*ADDED 'Specialist II, Lead ' TO DISPATCH BECAUSE 2 DISPATCHERS HAD A SPACE AFTER THEIR TITLE*/
 	when Title = 'Contractor, Dispatch' or (Title = 'Contractor' and Main.Email = 'norman.aves@pnmac.com') then 'DispatchOffshore Agent'
 	when Title in ('Specialist, Purchase Loan') then Title
 	when Title in ('Specialist, Loan Refinance','Spec, Loan Refi') then 'Specialist, Loan Refinance'
-	
+
 	when Title in ('Specialist I, Purchase Loan','Specialist II, Purchase Loan','Coordinator, Transaction') then 'Client Coordinator'     --
-	
+
 	--when Title in ('Specialist II, Purchase Loan') then 'Coordinator, Transaction'
 	when Title in ('Assistant II, Admin Support') then 'Assistant II, Administrative'
-	
+
 	when Title in('Specialist I, Mtge Fulfl Qual', 'Specialist II, Mtge Fulfl Qual') then 'Fulfillment Specialist'
 	--when PreferredName = 'Anna Barrera' then 'Manager - Shared Services'
 	when title in ('AVP, Compliance', 'AVP, Compliance/Bus Support', 'Mgr, Policies & Procedures') then 'Manager - Compliance'
 	when Title in( 'AVP, Business Ops', 'AVP, Control Tower', 'Mgr, Campaign') then 'Manager - Sales Support'
-	when ManagerEmployeeID = '001359' then 'Admin - Control Tower' 
+	when ManagerEmployeeID = '001359' then 'Admin - Control Tower'
     when Title in ('Mgr, Business Operations', 'Mgr, Retail Operations') and DeptName = 'Retail Shared Services' then 'Manager - Shared Services'
 	when Title in ('AVP, Pricing Operations') then 'Manager - Sales Support'
 	when Title in ('Manager, Sales','Manager, Reg Sales','VP, Rtl Sales & Chnl','Mgr, Sales','Manger, Sales', 'Sales Manager',
@@ -287,10 +291,10 @@ case
 	when PreferredName = 'Lisa Woltz' then 'Manager - Compliance'
 	when Title like '%AVP%' then 'Assistant Vice President'
 	when Title like '%VP%' then 'Vice President'
-	
 
-	
-	--when Title in ('AE, Rtl', 'Account Executive, Retail','Retail Account Executive','Account Executive, Retails','Account Executive, Retail Loan', 'Account Executive. Retail') 
+
+
+	--when Title in ('AE, Rtl', 'Account Executive, Retail','Retail Account Executive','Account Executive, Retails','Account Executive, Retail Loan', 'Account Executive. Retail')
 	--or Title like '%AE%Retail%' or Title = 'Sr Account Executive' then 'Account Executive'
 
 	when Title in ('AE, Rtl', 'Account Executive, Retail','Loan Officer','Retail Account Executive',
@@ -299,50 +303,50 @@ case
 					'Sr LO, New Customer Acquisition',
 					'Loan Origination, New Customer Acquisition',
 					'LO, Special Projects','Sr LO, New Customer Acq'
-					) 
-	or Title like '%AE%Retail%' 
+					)
+	or Title like '%AE%Retail%'
 	or Title like 'LO, New Customer Acq%' /*ADDED 202101*/ then 'Account Executive'  -- eff 7/19/16 ae
-	
+
 	when Title like '%Jr%Proce%' then 'Jr Processor'
 	when Title like '%Processor%' or Title = 'Aerotek' or Title = 'Procr, Rtl Loan' then 'Processor'
 	When Title in ('Procesor, Retail Loan','Procr, Retail Loan') then 'Processor'
-	
+
 	when Title in ('Analyst IV, Bus','Analyst IV, Bus Sys','Analyst IV, Business','Business Analyst IV',
 				   'Analyst II, Bus', 'Analyst II, Business' ) then 'Data & Reporting'
 
 	when Title in ('Sr Mgr, Data Mgt & Analytics') then 'Manager - Data & Reporting'
-	
+
 	when Title in ('Business Dev Officer','Business Development Officer','Bus Dev Ofcr', 'Bus Development Officer',
 			       'Affinity Business Dev Officer','Retail BDO/Business Dev Ofcr') then 'Business Development Officer'
-	
+
 	when Title in ('Opener, Retail Loan','Opener,Retail Loan','Opener, Rtl Loan','Retail Loan Opener', 'Opener, Retail oan') then 'Opener'
 	when Title in ('Closer, Retail Loan QC','Closer, Rtl Loan QC','Closer, Rtl Loan','Closer. Rtl Loan','Closer, Retails Loan') then 'QC Closer'
 	when Title = 'Closer, Retail Loan DD' then 'Doc Drawer'
-	when Title in ('Closer, Retail Loan Fun','Closer, Loan Retail', 'Sac, CA Fulfill/CL Rtl loan','Closer. Rtl Loan Fund','Closer, Retail Loan', 'Closer, Retail Loan Funding', 
+	when Title in ('Closer, Retail Loan Fun','Closer, Loan Retail', 'Sac, CA Fulfill/CL Rtl loan','Closer. Rtl Loan Fund','Closer, Retail Loan', 'Closer, Retail Loan Funding',
 					'Closer, Rtl Loan Fund', 'Retail Loan Closer','Funder, Retail Loan') then 'Funder'
-	
+
 	when Title in ('FVP, Retail Operations','FVP, Retail Ops','Manager, Retail Operations','Mgr, Retail Ops',
 				   'Sup, Closing','Supervisor, Closing','Manager, Retail Ops', 'Mgr, Rtl Ops', 'Mgr, Retail Operations','Retail Operations Manager','Sup, Purchase Rev Audit',
 				   'Sup, Training & Escalation','FVP, Retail Operations', 'VP, Retail Operations', 'Mgr, Mortgage Fulfillment', 'Sup, Mortgage Fulfillment') then 'Manager - Fulfillment'
-				   
-	
+
+
 	when Title in ('Mgr, Shared Services','Sup, Shared Serv Ops','Sup, Shared Services','Manager, Shared Services / TO', 'Mgr, Shared Services Ops') then 'Manager - Shared Services'
 	when Title in ('Specialist, Retail Dis','Specialist, Retail Disclosure','Spec, Retail Dis','Specialist II, Corr Quality',
 					'Spec, Retail Disclosure', 'Spec, Rtl Dis') then 'Disclosure Specialist'
-	
+
 	when Title in ('Mgr, Compliance','Manager, Retail Compliance','Manager, Compliance','Mgr, Retail Compliance','AVP, Retail Compliance', 'Mgr, Business Controls'
 					,'Manager, Policy & Procedure', 'AVP, Compliance/Bus Support', 'AVP, Compliance/Bus Support') then 'Manager - Compliance'
 	when Title in ('Auditor, Compliance Rev','Comp Program Mgr, CDL','Mgr, CDL P & P', 'Auditor, Compliance Review',
 					'Manager, Compliance Prgm, CDL','Auditor, Compliance Review','Auditor, Comp Review', 'Compliance Review Auditor',
 					'Adm, Policy & Procedure','Audr, Compliance Rvw', 'Admin, Policy & Procedure','Admin, Policies & Procedures') then 'Compliance Review/P&P'
-	
+
 	when Title in ('Lead Manager, Retail Lending','Lead Manager, Retail Lend') then 'Lead Manager'
-	
+
 	when Title in ('Manager, Retail Training') then 'Manager - Retail Training'
 	when Title in ('Trainer, Loan Servicing','Train, Loan Svc','Senior, Trainer','Trainer I','Trainer II', 'Designer I, Instructional', 'Developer I, WBT', 'Developer I, WB Training',
 					'Designer II, Instructional','Manager, Training','Mgr, Training','Associate I, Learning'
 					,'Developer II, WB Training') then 'Retail Training'
-	
+
 	when Title in ('Analyst, Call Monitor','Analyst, Call Monitoring','Analyst, Call Monitor', 'Team Leader, Call Monitoring','Sr Analyst, Call Monitoring') then 'Analyst, Call Monitor'
 	when Title in ('Manager, pricing/product','Mgr, Rtl Pric/Prod', 'Mgr, Retail Pricing & Products') then 'Manager - Product & Pricing'
 	when Title in ('Analyst, Product/Pricing','Analyst, Pricing/Product','Analyst, Pric/Prod','
@@ -350,18 +354,18 @@ case
 					'Analyst II, Pricing', 'Analyst II, Pricing & Products') then 'Pricing Analyst'
 	when Title in ('Analyst, Bus Retail Prod','Sr Analyst, Business', 'Business Analyst', 'Analyst, Bus Support', 'Analyst, Business Support') then 'Analyst - Business Ops'
 	when Title in ('Coordinator, Client','Coord, Client') then 'Client Coordinator'
-	
+
 	when Title like '%Sup%Dispatch%' then 'Supervisor - Dispatch'
-	
+
 	when Title like '%Dispatch%' and Title <> 'Mgr, Dispatch' then 'Dispatch Agent'
 	when Title in ('Team Manager','Mgr, Project Management','Manager, Bus Ops & Strategy',
 		           'Mgr, Bus Ops & Strat','Sr Mgr, Bus Ops & Strat', 'Manager, Business Systems', 'Sr Manager, Bus Ops & Strategy',
                     'Mgr, Data Mgmt & Analytics', 'Mgr, Control Tower', 'Mgr, Call Monitoring',
                     'Mgr, Business Systems', 'AVP, Pricing Operations', 'VP, Business Ops & Strategy',
                     'VP, Business Development','Manager, Control Tower','Manager, Call Monitoring', 'FVP, Retail Business Ops') then 'Manager - Sales Support'
-		           
+
 	when Title in ('Sr Mgr, Affinity Relat') then 'Manager - Affinity Relations'
-		           
+
 	when Title in ('Specialist, Process Supp','Specialist, Process Support', 'Sr. Analyst, Mtge Bus Sys','Sr. Analyst, Mtge Bus System','Sr Analyst, Mtge Business Sys',
 	                'Sr Analyst, Mtge Bus Systems') then 'Analyst, Business Sys'
 	when Title in ('Specialist, File Assig') then 'File Assign Specialist'
@@ -371,7 +375,7 @@ case
 	when Title in ('Sr. Manager, Business Analysis') then 'Sr. Manager, Business Analysis'
 	when Title in ('Spec II, Business Controls', 'Spec II, Business Control', 'Specialist II, Business Ctrl', 'Specialist II, Bus Controls',
 					'Specialist I, Business Control', 'Spec I, Business Control', 'Specialist I, Bus Controls') then 'Business Control Specialist'
-					
+
 
 	else Title
 end as TitleGrouping,
@@ -410,9 +414,9 @@ end as LOAPeriod,
 NULL as LO_Location,
 ISNULL(case
 			when PreferredName = 'Jose Rodriguez Flores' and @period >= 201405 then 'CA - Pasadena'
-			else OfficeLocation 
-		end,'City Unavailable') as City, 
-		
+			else OfficeLocation
+		end,'City Unavailable') as City,
+
 ISNULL(OfficeLocation,'City Unavailable') AS City_OfficeLocation,
 case
 	when PreferredName = 'Heather Barrow' and @period >= 201407 then 'Moorpark, CA CC Sales #1'
@@ -436,7 +440,7 @@ case
 	when Title like '%EVP%' or Title like '%SVP%' then 'Retail Executive Management'
 	when Title in ('Chief, Consumer Direct Lending', 'MD, Consumer Direct Lending') then 'Retail Executive Management'
 	when Title in ('VP, Retail Sales & Channel', 'FVP, Retail Call Ctr Ops','VP, Retail Sales & Chnnl Mgmt') and OfficeLocation in ('CA - Pasadena') then 'Pasadena Sales'
-	when Title in ('FVP, Bus Development Officer') and OfficeLocation in ('WA - Issaquah') then 'Seattle Sales'	
+	when Title in ('FVP, Bus Development Officer') and OfficeLocation in ('WA - Issaquah') then 'Seattle Sales'
 	when Title in('FVP, Retail Operations') and OfficeLocation = 'TX - Ft. Worth' then 'Dallas, TX Fulfillment'
 	when Title in ('VP, PCG Fulfillment', 'First VP, Retail Operations','Sup, Purchase Rev Audit') then  'Moorpark, CA Fulfillment'
 	when Title in ('Adm I, Ctrl Tower','Administrator I, Control Tower','Sr Manager, Bus Ops & Strategy', 'Specialist, Process Support','Admin I, Ctrl Tower', 'Sr. Analyst, Mtge Bus Sys', 'FVP, Retail Business Ops',
@@ -450,7 +454,7 @@ case
 		           'Mgr, Bus Ops & Strat','Sr Mgr, Bus Ops & Strat', 'Manager, Business Systems') then 'Sales Support'
 	when Title in ('Specialist, Retail Dis','Mgr, Shared Services','Specialist, Retail Disclosure','Spec, Retail Dis') then 'Shared Services'
 	when Title in ('VP, Org Infrastructure','Auditor, Compliance Rev','Manager, Retail Compliance','Mgr, Compliance') then 'Retail Enterprise Support'
-	
+
 	when Title in ('FVP, Retail Lending Bus Op','Lead Manager, Retail Lending','Lead Manager, Retail Lend','Specialist, Process Supp',
 				   'Mgr, Project Management','Manager, pricing/product','Mgr, Rtl Pric/Prod','Analyst, Pric/Prod','Analyst, Pricing/Product','Analyst, Product/Pricing','Analyst, Call Monitor',
 				   'Analyst, Bus Retail Prod','Dispatch Agent, Call Center','Dispatch Agent','Dispatch Agent, Call Cent',
@@ -476,7 +480,7 @@ case
 	when DeptName in ('Retail Production:Admin') then 'Retail Enterprise Support'
 	when DeptName in ('Retail Compliance Review','Admin, Policies & Procedures') then 'Retail Enterprise Support'
 	when Title in ('Processor, Retail Loan') then 'Fulfillment'
-	else DeptName 
+	else DeptName
 end as DepartmentGrouping,
 DivName as DivisionName, --REMOVED BY CHARLIE ON 07/08/2020 DUE TO ACCOUNTING/HR JULY 2020 CHANGE
 --CASE WHEN @period <= 202007 THEN OldDivisionName ELSE NewDivisionName END AS DivisionName, --ADDED BY CHARLIE ON 07/08/2020
@@ -487,7 +491,7 @@ Null as NegEqFlag,
 'N' as HelocFlag,
 Null as SLPTeamFlag,
 @period as Period,
-DepartmentId , 
+DepartmentId ,
 NULL AS TrainingStartDate,
 NULL AS TrainingEndDate,
 NULL AS LOAEndDate,
@@ -508,9 +512,9 @@ WorkStateName, --added on 1/20/21
 'N' AS CDLSales_CollegeLOProgram,
 NULL AS TrainingClass,
 CASE
-	WHEN (Main.Title = 'Contractor, Dispatch' and Main.EmployeeId like 'LQ%') or (Main.Title = 'Contractor, Dispatch' and Main.EmployeeId like 'OW%' and 
+	WHEN (Main.Title = 'Contractor, Dispatch' and Main.EmployeeId like 'LQ%') or (Main.Title = 'Contractor, Dispatch' and Main.EmployeeId like 'OW%' and
 		Main.Email in ('don.laroche@pnmac.com', 'kimaada.jackson@pnmac.com', 'maureen.stemmle@pnmac.com', 'rolando.tanedo@pnmac.com')) THEN 'LQ Agent'
-	WHEN (Title = 'Contractor, Dispatch' and Main.EmployeeId like 'OW%') or 
+	WHEN (Title = 'Contractor, Dispatch' and Main.EmployeeId like 'OW%') or
 		(Title = 'Contractor' and Main.Email = 'norman.aves@pnmac.com') THEN 'WNS Agent'
 	WHEN Main.Title = 'Contractor, Dispatch' and (Main.EmployeeId like 'OT%' or Main.EmployeeId like 'OQ%') THEN 'Squeeze Media Agent'
 	WHEN Main.Title = 'Contractor, Dispatch' THEN 'Agent'
@@ -525,7 +529,7 @@ OrgTierDescription,
 GETDATE() as RunDt
 
 FROM (
-	SELECT 
+	SELECT
 	EmployeeKey,
 	EmployeeId,
 	FirstName,
@@ -568,19 +572,19 @@ FROM (
 	DeptName,
 	DivName,
 	DivisionId,
-	ManagerId, 
-	ManagerName, 
+	ManagerId,
+	ManagerName,
 	ManagerEmail,
 	ManagerCity,
 	ManagerOfficePhoneNumber,
-	LastMonthStatus, 
-	LastMonthDept, 
+	LastMonthStatus,
+	LastMonthDept,
 	CostCenter,
 	ManagerTitle,
 	GroupRank
 
 	FROM (
-		SELECT 
+		SELECT
 		Emp.EmployeeKey,
 		Emp.EmployeeId,
 		Emp.FirstName,
@@ -629,13 +633,13 @@ FROM (
 		--OldDiv.Name AS OldDivisionName,
 		--NewDiv.Name AS NewDivisionName,
 		Dept.DivisionId, --ADDED BY CHARLIE ON 07/07/20 FOR WHERE CLAUSE TO CAPTURE DIVISIONID
-		Man.EmployeeId as ManagerId, 
-		Man.PreferredName as ManagerName, 
+		Man.EmployeeId as ManagerId,
+		Man.PreferredName as ManagerName,
 		Man.Email as ManagerEmail,
 		Man.OfficeLocation as ManagerCity,
 		Man.OfficePhoneNumber as ManagerOfficePhoneNumber,
-		ET.EmploymentStatus as LastMonthStatus, 
-		ET.Department as LastMonthDept, 
+		ET.EmploymentStatus as LastMonthStatus,
+		ET.Department as LastMonthDept,
 		Dept.CostCenterId as CostCenter,
 		Man.Title as ManagerTitle,
 		ROW_NUMBER() Over(Partition by Emp.EmployeeId Order by Emp.RowStartDate desc, Man.RowStartDate desc) as GroupRank
@@ -668,14 +672,14 @@ FROM (
 		--Email,
 		--case
 		--	when PreferredName = 'Jose Rodriguez Flores' and @period >= 201405 then 'CA - Pasadena'
-		--	else OfficeLocation 
+		--	else OfficeLocation
 		--end as OfficeLocation,
 		--OfficePhoneNumber,
 		--OfficePhoneExtension,
 		--ManagerEmployeeID
 
-		--From dw_org.dbo.employee (nolock)) Man 
-		--on Emp.ManagerEmployeeID = Man.EmployeeId 
+		--From dw_org.dbo.employee (nolock)) Man
+		--on Emp.ManagerEmployeeID = Man.EmployeeId
 
 		left join
 		(Select
@@ -685,7 +689,7 @@ FROM (
 		Email,
 		case
 			when PreferredName = 'Jose Rodriguez Flores' and @period >= 201405 then 'CA - Pasadena'
-			else OfficeLocation 
+			else OfficeLocation
 		end as OfficeLocation,
 		OfficePhoneNumber,
 		OfficePhoneExtension,
@@ -693,13 +697,13 @@ FROM (
 		RowStartDate,
 		UpdatedDateTime
 
-		From dw_org.dbo.employee (nolock)) Man 
+		From dw_org.dbo.employee (nolock)) Man
 		on Emp.ManagerEmployeeID = Man.EmployeeId and convert(varchar(6),DATEADD(d,-1,Man.UpdatedDateTime),112) <= @period
 
 
 
 
-		--left join 
+		--left join
 		--(Select *,
 		--Row_Number() Over(Partition by EmployeeId Order by RowStartDate desc) as GroupRank
 		--From dw_org.dbo.employee (nolock)
@@ -709,10 +713,10 @@ FROM (
 		left join #EmpTemp ET
 		on Emp.EmployeeId = ET.EmployeeId and ET.Period + case
 															when left(ET.Period,2) = '12' then 89
-															else 01 
-														  end = @period 
+															else 01
+														  end = @period
 
-		Where 
+		Where
 		convert(varchar(6),DATEADD(d,-1,Emp.UpdatedDateTime),112) <= @period --and LEFT(Emp.EmployeeId,1) <> 'C'
 		and Emp.Email <> 'jeremy.white@pnmac.com'--HR Errors with Records Impacting LO jeremy.white1@pnmac.com
 		and Emp.EmployeeId <> 'OT0595'--Squeeze Media Agent has this duplicate EmployeeId we are raisi
@@ -780,7 +784,7 @@ FROM (
 	OR Title = 'Contractor, Dispatch'
 	OR Title in ('Rep I, Customer Service','Rep II, Customer Service','Sr Rep, Customer Service','Senior Representative, Customer Service','Rep, Customer Service Sales')
 	)
-														     
+
 
 ) Main
 
@@ -790,9 +794,9 @@ on replace(replace(replace(replace(replace(
 AE.OfficerName,
 'Arutyun Vanyan','Aroutyun Vanyan'),'William Manapat','Billy Manapat'),'Nicamedes Bonifacio','Nick Bonifacio')
 ,'Christopher Jantz','Chris Jantz'),'Feraba Aowrang','Fereba Aowrang')
-= 
+=
 Main.FirstName + ' ' + Main.LastName
--------------------------------------------------------------------------------------------------------------------------------		
+-------------------------------------------------------------------------------------------------------------------------------
 Set @date = DATEADD(m,1,@date)
 -------------------------------------------------------------------------------------------------------------------------------
 Set @period = rrd.dbo.udf_MonthYear_Int(@date)
@@ -1027,8 +1031,8 @@ where EmployeeName = 'Angel Potts'
 
 
 Update #EmpTemp
-Set HirePeriod = rrd.dbo.udf_MonthYear_Int(HireDate)				
-						
+Set HirePeriod = rrd.dbo.udf_MonthYear_Int(HireDate)
+
 --ADDDED 05/23/2020 FOR DUPLICATE RECORDS FROM HR
 DELETE FROM #EmpTemp
 WHERE EmployeeEmail = 'dian.corsiga@pnmac.com'
@@ -1069,7 +1073,7 @@ Where LEFT(ET.EmployeeId,2) = 'OT' and LEFT(ET2.EmployeeId,2) <> 'OT'
 
 Update ET
 
-Set ManagerName_TwoUp = 
+Set ManagerName_TwoUp =
 ET2.ManagerName
 
 From #EmpTemp ET
@@ -1082,7 +1086,7 @@ on case
 
 
 Update ET
-Set ET.ManagerName_ThreeUp = 
+Set ET.ManagerName_ThreeUp =
 ET2.ManagerName_TwoUp
 
 From #EmpTemp ET
@@ -1099,7 +1103,7 @@ If OBJECT_ID('tempdb..#Final') Is Not Null
 drop table #Final
 
 --INSERT NEW FIELD NAME IN QUERY BELOW NEXT TO THE APPROPRIATE FIELD OR NEXT ALPHABETICALLY (Third of 3 sections to include)
-select 
+select
 EmployeeId,
 AE_NMLS_ID,
 CDLAgentType,
@@ -1255,7 +1259,7 @@ Where NegEqFlag Is Null
 /*NCA UPDATE*/
 UPDATE #Final
 SET TitleGrouping = 'Account Executive', NCAFlag = 'Y'
-WHERE Title = 'LO, New Customer Acq' or Title = 'LO, New Customer Acquisition' 
+WHERE Title = 'LO, New Customer Acq' or Title = 'LO, New Customer Acquisition'
 
 UPDATE #Final
 SET NCAFlag_Agent = 'Y'
@@ -1314,11 +1318,11 @@ WHERE EmployeeEmail in (
 )
 
 UPDATE #Final
-SET 
+SET
 	MFDBenchFlag = 'Y'
 WHERE
 	Title LIKE '%Bench%'
-AND	
+AND
 	Department LIKE '%MFD%'
 
 UPDATE #Final
@@ -1441,7 +1445,7 @@ SET F.BlendTrainingDate = B.BlendTrainingDate
 
 FROM #Final F
 left join rrd.dbo.BlendTrainingDates2021 B
-ON F.EmployeeEmail = B.EmployeeEmail 
+ON F.EmployeeEmail = B.EmployeeEmail
 --------------------------------------------
 UPDATE F
 
@@ -1449,8 +1453,8 @@ SET F.BlendFlag = 'Y'
 
 FROM #Final F
 
-left join rrd.dbo.BlendTrainingDates2021 B 
-ON F.EmployeeEmail = B.EmployeeEmail 
+left join rrd.dbo.BlendTrainingDates2021 B
+ON F.EmployeeEmail = B.EmployeeEmail
 WHERE F.Period = B.BlendTrainingPeriod
 /*========================= BLEND END=====================================*/
 
@@ -1484,7 +1488,7 @@ WHERE Title = 'Sr' and Period >= 202009 and EmployeeName in (
 'Roberto Arias')
 
 
-/*NAME CHANGES*/	
+/*NAME CHANGES*/
 --------------------------------------------------------------------------------------------------------
 UPDATE #Final
 SET EmployeeName = 'Brandon Ternes'
@@ -1534,7 +1538,7 @@ UPDATE #Final
 Set EmployeeName = 'Juan Alvarez'
 where Employeename = 'Juan Daniel Alvarez' and EmployeeEmail = 'juan.alvarez@pnmac.com'
 
-Update #Final	
+Update #Final
 Set EmployeeEmail = 'janet.khanibikunle@pnmac.com'
 where Employeename = 'Janet Khan-Ibikunle'
 
@@ -1611,9 +1615,9 @@ Set EmployeeName = 'Tyler Wynn'
 where Employeename = 'Ty WYNN' and EmployeeEmail = 'tyler.wynn@pnmac.com'
 
 UPDATE #Final
-SET ManagerName = 'Eddie Machuca' 
+SET ManagerName = 'Eddie Machuca'
 WHERE ManagerName = 'Eddie Mach' and ManagerEmail = 'eddie.machuca@pnmac.com'
-																
+
 Update #Final
 Set EmployeeName = 'Courtney Romanet'
 where Employeename = 'Courtney Bettcher' and EmployeeEmail = 'courtney.bettcher@pnmac.com'
@@ -1749,7 +1753,7 @@ where Employeename= 'Russell Martin' and EmployeeEmail = 'russell.martin@pnmac.c
 
 Update #Final
 Set EmployeeName = 'Susan Flores'
-where Employeename= 'Sammy Flores' and EmployeeEmail = 'susan.flores@pnmac.com'	
+where Employeename= 'Sammy Flores' and EmployeeEmail = 'susan.flores@pnmac.com'
 
 Update #Final
 Set EmployeeName = 'Lisa Woltz'
@@ -1768,43 +1772,43 @@ Set EmployeeName = 'Pamela Wilcox'
 where EmployeeName='Pam Wilcox' and EmployeeEmail = 'pamela.wilcox@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Christopher Coleman' 
-WHERE EmployeeName = 'Chris Coleman' and EmployeeEmail = 'christopher.coleman@pnmac.com' 
+SET EmployeeName = 'Christopher Coleman'
+WHERE EmployeeName = 'Chris Coleman' and EmployeeEmail = 'christopher.coleman@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Juan Alvarez' 
-WHERE EmployeeName = 'Daniel Alvarez' and EmployeeEmail = 'juan.alvarez@pnmac.com' 
+SET EmployeeName = 'Juan Alvarez'
+WHERE EmployeeName = 'Daniel Alvarez' and EmployeeEmail = 'juan.alvarez@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Michael Mikulich' 
-WHERE EmployeeName = 'Michael L Mikulich' and EmployeeEmail = 'michael.mikulich@pnmac.com' 
+SET EmployeeName = 'Michael Mikulich'
+WHERE EmployeeName = 'Michael L Mikulich' and EmployeeEmail = 'michael.mikulich@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'David Clark' 
-WHERE EmployeeName = 'Dave Clark' and EmployeeEmail = 'david.clark@pnmac.com' 
+SET EmployeeName = 'David Clark'
+WHERE EmployeeName = 'Dave Clark' and EmployeeEmail = 'david.clark@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Joshua Hylan' 
-WHERE EmployeeName = 'Josh Hylan' and EmployeeEmail = 'joshua.hylan@pnmac.com' 
+SET EmployeeName = 'Joshua Hylan'
+WHERE EmployeeName = 'Josh Hylan' and EmployeeEmail = 'joshua.hylan@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Wesley Marsh' 
-WHERE EmployeeName = 'Wes Marsh' and EmployeeEmail = 'wesley.marsh@pnmac.com' 
+SET EmployeeName = 'Wesley Marsh'
+WHERE EmployeeName = 'Wes Marsh' and EmployeeEmail = 'wesley.marsh@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'James Randall' 
-WHERE EmployeeName = 'Dave Randall' and EmployeeEmail = 'james.randall@pnmac.com' 
+SET EmployeeName = 'James Randall'
+WHERE EmployeeName = 'Dave Randall' and EmployeeEmail = 'james.randall@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Matthew Mcglinn' 
-WHERE EmployeeName = 'Matt Mcglinn' and EmployeeEmail = 'matthew.mcglinn@pnmac.com' 
+SET EmployeeName = 'Matthew Mcglinn'
+WHERE EmployeeName = 'Matt Mcglinn' and EmployeeEmail = 'matthew.mcglinn@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Anthony Gonzales' 
+SET EmployeeName = 'Anthony Gonzales'
 WHERE EmployeeName = 'Tony Gonzales' and EmployeeEmail = 'anthony.gonzales@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Samuel Uzzan' 
+SET EmployeeName = 'Samuel Uzzan'
 WHERE EmployeeName = 'Sam Uzzan' and EmployeeEmail = 'samuel.uzzan@pnmac.com'
 
 UPDATE #Final
@@ -1812,159 +1816,159 @@ SET EmployeeName = 'Siena Lee' , EmployeeEmail = 'siena.lee@pnmac.com'
 WHERE EmployeeName = 'Kyungmi Lee' and EmployeeEmail = 'kyungmi.lee@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Joseph Ferrante' 
+SET EmployeeName = 'Joseph Ferrante'
 WHERE EmployeeName = 'Joe Ferrante' and EmployeeEmail = 'joseph.ferrante@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Joseph Gallo' 
+SET EmployeeName = 'Joseph Gallo'
 WHERE EmployeeName = 'Joe Gallo' and EmployeeEmail = 'joseph.gallo@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'William Caylor' 
+SET EmployeeName = 'William Caylor'
 WHERE EmployeeName = 'Austin Caylor' and EmployeeEmail = 'william.caylor@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Sharon Luckett' 
+SET EmployeeName = 'Sharon Luckett'
 WHERE EmployeeName = 'Shay Luckett' and EmployeeEmail = 'sharon.luckett@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'John McCafferty' 
+SET EmployeeName = 'John McCafferty'
 WHERE EmployeeName = 'Drew McCafferty' and EmployeeEmail = 'john.mccafferty@pnmac.com'
 
 UPDATE #Final
-SET ManagerName = 'Anthony Trozera' 
+SET ManagerName = 'Anthony Trozera'
 WHERE ManagerName = 'Tony Trozera' and ManagerEmail = 'anthony.trozera@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Candace Daramola' 
+SET EmployeeName = 'Candace Daramola'
 WHERE EmployeeName = 'Delori Daramola' and EmployeeEmail = 'candace.daramola@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'James Young' 
+SET EmployeeName = 'James Young'
 WHERE EmployeeName = 'Rick Young' and EmployeeEmail = 'james.young@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Andrew Pena' 
+SET EmployeeName = 'Andrew Pena'
 WHERE EmployeeEmail = 'andrew.pena@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Nicholas Massari' 
+SET EmployeeName = 'Nicholas Massari'
 WHERE EmployeeName = 'Nick Massari' and EmployeeEmail = 'nicholas.massari@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Nicholas Hunter' 
+SET EmployeeName = 'Nicholas Hunter'
 WHERE EmployeeName = 'Nick Hunter' and EmployeeEmail = 'nicholas.hunter@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Peter Perez' 
+SET EmployeeName = 'Peter Perez'
 WHERE EmployeeName = 'Pete Perez' and EmployeeEmail = 'peter.perez@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Artuz Manning Jr' 
+SET EmployeeName = 'Artuz Manning Jr'
 WHERE EmployeeName = 'Artuz Manning' and EmployeeEmail = 'artuz.manning@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Chris Nicholson' 
+SET EmployeeName = 'Chris Nicholson'
 WHERE EmployeeName = 'Christopher Nicholson' and EmployeeEmail = 'chris.nicholson@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Abayomi Famuyiwa' 
+SET EmployeeName = 'Abayomi Famuyiwa'
 WHERE EmployeeName = 'Yomi Famuyiwa' and EmployeeEmail = 'abayomi.famuyiwa@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Jon Rosenthal' 
+SET EmployeeName = 'Jon Rosenthal'
 WHERE EmployeeName = 'JT Rosenthal' and EmployeeEmail = 'jon.rosenthal@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'David Westfall' 
+SET EmployeeName = 'David Westfall'
 WHERE EmployeeName = 'Dave Westfall' and EmployeeEmail = 'david.westfall@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Elizabeth Cahill' 
+SET EmployeeName = 'Elizabeth Cahill'
 WHERE EmployeeName = 'Liz Cahill' and EmployeeEmail = 'elizabeth.cahill@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Pavandeep Mann' 
+SET EmployeeName = 'Pavandeep Mann'
 WHERE EmployeeName = 'Pavan Mann' and EmployeeEmail = 'pavandeep.mann@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Alberto De Leon' 
+SET EmployeeName = 'Alberto De Leon'
 WHERE EmployeeName = 'Alberto Leon' and EmployeeEmail = 'alberto.leon@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Cynthia Crouse' 
+SET EmployeeName = 'Cynthia Crouse'
 WHERE EmployeeName = 'Cindy Crouse' and EmployeeEmail = 'cynthia.crouse@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Tynisha Robinson' 
+SET EmployeeName = 'Tynisha Robinson'
 WHERE EmployeeName = 'Ty Robinson' and EmployeeEmail = 'tynisha.robinson@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Matthew Rittenhouse' 
+SET EmployeeName = 'Matthew Rittenhouse'
 WHERE EmployeeName = 'Matt Rittenhouse' and EmployeeEmail = 'matthew.rittenhouse@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Michael Zajac' 
+SET EmployeeName = 'Michael Zajac'
 WHERE EmployeeName = 'Mike Zajac' and EmployeeEmail = 'michael.zajac@pnmac.com'
 
 UPDATE #Final
-SET EmployeeName = 'Al Nasser' 
+SET EmployeeName = 'Al Nasser'
 WHERE EmployeeName = 'Al Al Nasser' and EmployeeEmail = 'al.nasser@pnmac.com' and Period >= 202106
 
 UPDATE #Final
-SET EmployeeName = 'Al Nasser' 
+SET EmployeeName = 'Al Nasser'
 WHERE EmployeeName = 'Al Al Nasser' and EmployeeEmail = 'al.nasser@pnmac.com' and Period >= 202106
 
 UPDATE #Final
-SET EmployeeName = 'Maziar Alagheband' 
+SET EmployeeName = 'Maziar Alagheband'
 WHERE EmployeeName = 'Mazi Alagheband' and EmployeeEmail = 'maziar.alagheband@pnmac.com' and Period >= 202106
 
 UPDATE #Final
-SET EmployeeName = 'Ali Shams' 
+SET EmployeeName = 'Ali Shams'
 WHERE EmployeeName = 'Eli Shams' and EmployeeEmail = 'ali.shams@pnmac.com' and Period >= 202106
 
 UPDATE #Final
-SET EmployeeName = 'JohnCarlo Menjivar' 
+SET EmployeeName = 'JohnCarlo Menjivar'
 WHERE EmployeeName = 'John Menjivar' and EmployeeEmail = 'johncarlo.menjivar@pnmac.com' and Period >= 202106
 
 UPDATE #Final
-SET EmployeeName = 'Yvonne Holloway' 
+SET EmployeeName = 'Yvonne Holloway'
 WHERE EmployeeName = 'Bonnie Holloway' and EmployeeEmail = 'yvonne.holloway@pnmac.com' and Period >= 202106
 
 UPDATE #Final
-SET EmployeeName = 'Gabriel Phelps' 
+SET EmployeeName = 'Gabriel Phelps'
 WHERE EmployeeName = 'Gabe Phelps' and EmployeeEmail = 'gabriel.phelps@pnmac.com' and Period >= 202106
 
 UPDATE #Final
-SET EmployeeName = 'Christopher Sapienza' 
+SET EmployeeName = 'Christopher Sapienza'
 WHERE EmployeeName = 'Chris Sapienza' and EmployeeEmail = 'christopher.sapienza@pnmac.com' and Period >= 202106
 
 UPDATE #Final
-SET EmployeeName = 'Daniel Poling' 
+SET EmployeeName = 'Daniel Poling'
 WHERE EmployeeName = 'Dan Poling' and EmployeeEmail = 'daniel.poling@pnmac.com' and Period >= 202106
 
 UPDATE #Final
-SET EmployeeName = 'William Fitch' 
+SET EmployeeName = 'William Fitch'
 WHERE EmployeeName = 'Brad Fitch' and EmployeeEmail = 'william.fitch@pnmac.com' and Period >= 202106
 
 UPDATE #Final
-SET EmployeeName = 'Christopher Toler' 
+SET EmployeeName = 'Christopher Toler'
 WHERE EmployeeName = 'Chris Toler' and EmployeeEmail = 'christopher.toler@pnmac.com' and Period >= 202106
 
 UPDATE #Final
-SET EmployeeName = 'Josh Siguenza' 
+SET EmployeeName = 'Josh Siguenza'
 WHERE EmployeeName = 'Joshua Siguenza' and EmployeeEmail = 'josh.siguenza@pnmac.com' and Period >= 202106
 
 UPDATE #Final
-SET EmployeeName = 'Anastasios Marcopulos' 
+SET EmployeeName = 'Anastasios Marcopulos'
 WHERE EmployeeName = 'Taso Marcopulos' and EmployeeEmail = 'anastasios.marcopulos@pnmac.com' and Period >= 202106
 
 UPDATE #Final
-SET EmployeeName = 'James Bushong' 
+SET EmployeeName = 'James Bushong'
 WHERE EmployeeName = 'Travis Bushong' and EmployeeEmail = 'james.bushong@pnmac.com' and Period >= 202106
 
 UPDATE #Final
-SET EmployeeName = 'Josh Baker' 
+SET EmployeeName = 'Josh Baker'
 WHERE EmployeeName = 'Joshua Baker' and EmployeeEmail = 'josh.baker@pnmac.com' and Period >= 202105
 
 UPDATE #Final
@@ -2080,7 +2084,7 @@ WHERE EmployeeName = 'Chris Johnson'
 UPDATE #Final
 SET EmployeeName = 'Kathryn Lesseur',
     EmployeeEmail = 'kathryn.lesseur@pnmac.com'
-WHERE EmployeeName = 'Kathyrn Lesseur' 
+WHERE EmployeeName = 'Kathyrn Lesseur'
 
 UPDATE #Final
 SET EmployeeName = 'Benjamin Mygatt'
@@ -2234,23 +2238,23 @@ WHERE EmployeeName = 'Tashae Davis' and EmployeeEmail = 'old.tashae.davis@pnmac.
 
 Update #Final
 Set EmployeeName = 'Tashia Hoekstra'
-Where EmployeeName = 'Tashia Hoesktra' and EmployeeEmail = 'tashia.hoektra@pnmac.com' 
+Where EmployeeName = 'Tashia Hoesktra' and EmployeeEmail = 'tashia.hoektra@pnmac.com'
 
 Update #Final
 Set EmployeeName = 'Charles Norice III'
-Where EmployeeName = 'Charles Norice' and EmployeeEmail = 'charles.norice@pnmac.com' 
+Where EmployeeName = 'Charles Norice' and EmployeeEmail = 'charles.norice@pnmac.com'
 
 Update #Final
 Set EmployeeName = 'Barbara Smith'
-Where EmployeeName = 'Becky Smith' and EmployeeEmail = 'barbara.smith@pnmac.com' 
+Where EmployeeName = 'Becky Smith' and EmployeeEmail = 'barbara.smith@pnmac.com'
 
 Update #Final
 Set EmployeeName = 'Theaurty Howard Jr'
-Where EmployeeName = 'Theaurty Howard' and EmployeeEmail = 'theaurty.howard@pnmac.com' 
+Where EmployeeName = 'Theaurty Howard' and EmployeeEmail = 'theaurty.howard@pnmac.com'
 
 Update #Final
 Set EmployeeName = 'Michael Pemberton'
-Where EmployeeName = 'Mike Pemberton' and EmployeeEmail = 'michael.pemberton@pnmac.com' 
+Where EmployeeName = 'Mike Pemberton' and EmployeeEmail = 'michael.pemberton@pnmac.com'
 
 Update #Final
 Set EmployeeName = 'Manuel Cobos'
@@ -2429,7 +2433,7 @@ WHERE EmployeeName = 'Juan Carlos Soto'
 
 Update #Final
 Set EmployeeName = 'Moiralanna Nolan'
-Where EmployeeName = 'Mo Nolan' and EmployeeEmail = 'moiralana.nolan@pnmac.com' 
+Where EmployeeName = 'Mo Nolan' and EmployeeEmail = 'moiralana.nolan@pnmac.com'
 
 UPDATE #Final
 SET EmployeeName = 'Moiralanna Nolan' --MISPELLED WITH ONE N
@@ -3460,7 +3464,7 @@ where EmployeeName = 'Paul Santiago'
 UPDATE #Final
 SET City = 'Manila',
 	City_OfficeLocation = 'PH - Manila'
-WHERE City in ('Manilla','Philippines') 
+WHERE City in ('Manilla','Philippines')
 or City_OfficeLocation in ('PH - Manilla', 'Manila- Philippines')
 
 Update #Final
@@ -3832,19 +3836,19 @@ Set HireDate = '6/22/2015'
 where EmployeeName = 'Maria Solorzano'
 
 Update #Final
-Set 
+Set
 Title = 'Client Coordinator',
 TitleGrouping = 'Client Coordinator'
-Where 
+Where
 EmployeeName = 'Lea Santoyo'
 and Period between 201404 and 201502
 
 
 Update #Final
-Set 
+Set
 Title = 'Account Executive',
 TitleGrouping = 'Account Executive'
-Where 
+Where
 EmployeeName = 'Lea Santoyo'
 and Period = 201503
 
@@ -3881,7 +3885,7 @@ Where EmployeeName = 'Ruben Sanchez'
 and Period = 201809
 
 /*
-OFFICE PHONE NUMBER CHANGES - CHARLIE 07/10/2019 
+OFFICE PHONE NUMBER CHANGES - CHARLIE 07/10/2019
 Phone numbers were changed due to the PennyMac hotlin number being associated with these terminated employees.
 */
 
@@ -3907,7 +3911,7 @@ WHERE EmployeeName in (
 'Shakeb Mohammad',
 'Stephanie DiGiovine',
 'Suzanne Feinberg',
-'Yaladait Chavez') 
+'Yaladait Chavez')
 
 
 --=======Update Jr. LoanOfficer Title Grouping to Dispatch Agent while they perform Dispatch activities
@@ -3950,17 +3954,17 @@ Set City = case
 				when CHARINDEX('-',City) <> 0 then rrd.dbo.udf_RemoveNonAlpha(RIGHT(City,LEN(City)-charindex('-',City)-1))
 				else rrd.dbo.udf_RemoveNonAlpha(City)
 		  end
-				  
-				  
+
+
 Update #Final
 Set ManagerCity = case
 					when ManagerCity like '%Worth%' then 'Ft Worth'
-					when CHARINDEX('-',ManagerCity) <> 0 
+					when CHARINDEX('-',ManagerCity) <> 0
 							then rrd.dbo.udf_RemoveNonAlpha(RIGHT(ManagerCity,LEN(ManagerCity)-charindex('-',ManagerCity)-1))
 					else rrd.dbo.udf_RemoveNonAlpha(ManagerCity)
 				  end
-				  
-			  
+
+
 
 Update SM
 Set NewDepartmentFlag = case
@@ -3974,8 +3978,8 @@ left join #Final SM2 (nolock)
 on SM.EmployeeId = SM2.EmployeeId
 and SM.Period = SM2.Period + case
 								when left(SM2.Period,2) = '12' then 89
-								else 01 
-							  end 
+								else 01
+							  end
 
 
 
@@ -4045,9 +4049,9 @@ where City = 'Atlanta' and EmployeeName like 'Adriana Smith'
 
 
 
---- Updated Email Address of Term Employee,  due to new employee having the same address 
+--- Updated Email Address of Term Employee,  due to new employee having the same address
 
-Update #Final 
+Update #Final
 Set EmployeeEmail = 'jas.singh@pnmac.com_term',
     EmployeeName = 'Jas Singh_Term'
 Where EmployeeId = '000748'
@@ -4084,7 +4088,7 @@ and EmployeeName in (
 update #Final
 Set HireDate = '7/18/2018', HirePeriod = 201807
 where
-EmployeeName 
+EmployeeName
 in (
 'Beverly McLean',
 'Dominique Johnston',
@@ -4101,7 +4105,7 @@ in (
 update #Final
 Set HireDate = '8/1/2018', HirePeriod = 201808
 where
-EmployeeName 
+EmployeeName
 in (
 'Cynthia Thomas',
 'Danielle Williams',
@@ -4117,7 +4121,7 @@ in (
 --update #Final
 --Set HireDate = '8/22/2018', HirePeriod = 201808
 --where
---EmployeeName 
+--EmployeeName
 --in (
 --'Altricia Echols',
 --'Andre''sha N Baker',
@@ -4138,7 +4142,7 @@ in (
 --update #Final
 --Set HireDate = '9/25/2018', HirePeriod = 201809
 --where
---EmployeeName 
+--EmployeeName
 --in (
 --'Adriana Smith',
 --'Cheyenne Ross',
@@ -4156,16 +4160,16 @@ in (
 
 
 ----removes Rachelle Andrade's contractor record
-delete 
-from #Final 
+delete
+from #Final
 where Period in (201508, 201509, 201510, 201511, 201512, 201601, 201602, 201603, 201604, 201605, 201606, 201607,201608,201609, 201610, 201611, 201612
 				,201701, 201702, 201703, 201704,201705,201706,201707,201708,201709,201710,201711,201712, 201801, 201802, 201803) and EmployeeId = 'C00566'
-					
-										  
+
+
 
 ----update to write the LOA period and date to all subsequent month snapshots - 9/15/2015 - LC
 Update #Final
-Set LOAPeriod = (Select MAX(LOAPeriod) 
+Set LOAPeriod = (Select MAX(LOAPeriod)
 				 From #Final
 				 Where EmployeeName = SM.EmployeeName
 				 and Period <= SM.Period)
@@ -4173,7 +4177,7 @@ Set LOAPeriod = (Select MAX(LOAPeriod)
 
 
 Update #Final
-Set LOADate = (Select MAX(LOADate) 
+Set LOADate = (Select MAX(LOADate)
 				 From #Final
 				 Where EmployeeName = SM.EmployeeName
 				 and Period <= SM.Period)
@@ -4183,34 +4187,34 @@ Set LOADate = (Select MAX(LOADate)
 --update #Final
 --Set TenuredDate=
 --case
-	
---	when 
+
+--	when
 --	--TitleGrouping = 'Account Executive'
 --    TitleGrouping in ('Account Executive','Loan Officer') and Purchaseflag='Y' -- eff 7/19/16 ae
---	then 
+--	then
 --		case
 --			when DATEPART(d,HireDate) <= 15 then rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,4,HireDate))
 --			else rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,5,HireDate))
 --		end
 --	 else TenuredDate
 --end--by PK for ManagerProductivity
-	
-	
+
+
 --Update #Final
 
 --Set TenuredFlag = case
 --					when rrd.dbo.udf_MonthYear_Int(TenuredDate) <= Period then 'Y'
 --					else 'N'
 --				  end--by PK for ManagerProductivity
-				  
+
 --Update #Final
 
 --Set TenuredNextMoFlag = case
---							when rrd.dbo.udf_MonthYear_Int(Dateadd(m,-1,TenuredDate)) = Period 
+--							when rrd.dbo.udf_MonthYear_Int(Dateadd(m,-1,TenuredDate)) = Period
 --							then 'Y'
 --							else 'N'
 --						end--by PK for ManagerProductivity
-						
+
 
 
 
@@ -4219,7 +4223,7 @@ Set LOADate = (Select MAX(LOADate)
 --======================================================================================================
 Update #Final
 Set DivisionGroup = 'CDL'
-Where 
+Where
 Period <= 201502
 
 --or (Period > 201502 and EmploymentStatus Not In ('Active') and EmployeeId in (
@@ -4310,8 +4314,8 @@ and Period >= 201908 and Period < 202003
 Update #Final
 Set PurchaseFlag = 'N'
 where EmployeeName in (
-'Abdul Saleh', 
-'Joshua Baker', 
+'Abdul Saleh',
+'Joshua Baker',
 'haroutun Arzrounian',
 'Kevin Lundberg'
 )
@@ -4556,7 +4560,7 @@ WHERE Period = 202206
 and EmployeeEmail in (
     'Edith.Torosyan@pnmac.com'
     )
-	
+
 UPDATE #Final
 SET EmploymentStatus = 'Terminated',
     TerminationDate = '06/08/2022',
@@ -4579,7 +4583,7 @@ WHERE Period = 202206
     'jason.martinez@pnmac.com',
     'roudvik.abdalian@pnmac.com'
     )
-	
+
 UPDATE #Final
 SET EmploymentStatus = 'LOA',
 LOADate = '06/07/2022',
@@ -5673,7 +5677,7 @@ WHERE Period = 202201
 UPDATE #Final
 SET EmploymentStatus = 'LOA',
 LOADate = '09/06/2021',
-LOAPeriod = 202109	
+LOAPeriod = 202109
 WHERE Period between 202109 and 202203
 and EmployeeEmail in (
 	'ed.vandervelde@pnmac.com'
@@ -5682,7 +5686,7 @@ and EmployeeEmail in (
 UPDATE #Final
 SET EmploymentStatus = 'LOA',
 LOADate = '11/24/2021',
-LOAPeriod = 202111	
+LOAPeriod = 202111
 WHERE Period between 202111 and 202202
 and EmployeeEmail in (
 	'brian.stoddard@pnmac.com'
@@ -5690,21 +5694,21 @@ and EmployeeEmail in (
 
 UPDATE #Final
 SET LOADate = '11/24/2021',
-LOAPeriod = 202111	
+LOAPeriod = 202111
 WHERE Period >= 202111
 and EmployeeEmail in (
 	'brian.stoddard@pnmac.com'
 	)
 
 UPDATE #Final
-SET LOAEndDate = '04/17/2022'	
+SET LOAEndDate = '04/17/2022'
 WHERE Period >= 202204
 and EmployeeEmail in (
 	'ed.vandervelde@pnmac.com'
 	)
 
 UPDATE #Final
-SET LOAEndDate = '02/02/2022'	
+SET LOAEndDate = '02/02/2022'
 WHERE Period >= 202202
 and EmployeeEmail in (
 	'brian.stoddard@pnmac.com'
@@ -6290,7 +6294,7 @@ WHERE Period = 202108
 	'austin.holman@pnmac.com'
 	)
 
-UPDATE #Final	
+UPDATE #Final
 SET EmploymentStatus = 'Terminated',
 	TerminationDate = '08/05/2021',
 	TermPeriod = 202108
@@ -6310,7 +6314,7 @@ WHERE Period = 202108
 --	'justin.beck@pnmac.com'
 --	)
 
-UPDATE #Final	
+UPDATE #Final
 SET EmploymentStatus = 'Terminated',
 	TerminationDate = '08/01/2021',
 	TermPeriod = 202108
@@ -6463,7 +6467,7 @@ SET EmploymentStatus = 'LOA',
 WHERE Period = 202105
 	and EmployeeEmail in (
 	'gabrialla.gabriel@pnmac.com',
-	'braxton.bearden@pnmac.com',	
+	'braxton.bearden@pnmac.com',
 	'abigail.wilson@pnmac.com'
 	)
 
@@ -6603,7 +6607,7 @@ WHERE Period = 202103
 	'barbara.dudzienski@pnmac.com'
 	)
 
-UPDATE #Final 
+UPDATE #Final
 SET EmploymentStatus = 'Terminated',
 	TerminationDate = '03/16/2021',
 	TermPeriod = 202103
@@ -6670,7 +6674,7 @@ WHERE Period = 202103
 	'nicole.graham@pnmac.com'
 	)
 
-UPDATE #Final 
+UPDATE #Final
 SET EmploymentStatus = 'LOA',
 	LOADate = '3/15/2021',
 	LOAPeriod = 202103
@@ -6687,7 +6691,7 @@ WHERE Period = 202103
 	and EmployeeEmail in (
 	'abed.almaoui@pnmac.com'
 	)
-	
+
 UPDATE #Final
 SET EmploymentStatus = 'LOA',
 	LOADate = '3/1/2021',
@@ -6867,7 +6871,7 @@ WHERE Period = 202101
 	and EmployeeName in (
 	'David Kater'
 	)
-	
+
 UPDATE #Final
 SET EmploymentStatus = 'LOA',
 	LOADate = '12/10/2020',
@@ -6891,7 +6895,7 @@ WHERE Period = 202012
 	and EmployeeEmail in (
 	'carl.thomas@pnmac.com'
 	)
-	
+
 UPDATE #Final
 SET EmploymentStatus = 'Terminated',
 	TerminationDate = '12/18/2020',
@@ -6915,7 +6919,7 @@ WHERE Period = 202012
 	and EmployeeEmail in (
 	'solomon.mesumbe@pnmac.com'
 	)
-	
+
 UPDATE #Final
 SET EmploymentStatus = 'Terminated',
 	TerminationDate = '12/16/2020',
@@ -6987,10 +6991,10 @@ WHERE Period = 202012
 	)
 	and EmployeeEmail in (
 	'jirir.wosgerijyan@pnmac.com'
-	)	
+	)
 
 UPDATE #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '12/3/20',
 	TermPeriod = 202012
 WHERE Period = 202012
@@ -6999,7 +7003,7 @@ WHERE Period = 202012
 	)
 
 UPDATE #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '11/30/20',
 	TermPeriod = 202011
 WHERE Period = 202011
@@ -7008,7 +7012,7 @@ WHERE Period = 202011
 	)
 
 UPDATE #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '11/24/20',
 	TermPeriod = 202011
 WHERE Period = 202011
@@ -7017,14 +7021,14 @@ WHERE Period = 202011
 	)
 
 UPDATE #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '11/20/20',
 	TermPeriod = 202011
 WHERE Period = 202011
 	and EmployeeName in (
 	'Clinton Harris'
 	)
-	
+
 UPDATE #Final
 SET EmploymentStatus = 'LOA',
 	LOADate = '11/11/20',
@@ -7060,7 +7064,7 @@ WHERE Period = 202011
 	and EmployeeEmail in (
 	'daniel.turner@pnmac.com'
 	)
-	
+
 UPDATE #Final
 SET EmploymentStatus = 'Terminated',
 	TerminationDate = '10/30/20',
@@ -7095,7 +7099,7 @@ WHERE Period = 202010
 	)
 
 UPDATE #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '10/9/20',
 	TermPeriod = 202010
 WHERE Period = 202010
@@ -7104,7 +7108,7 @@ WHERE Period = 202010
 	)
 
 UPDATE #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '10/6/20',
 	TermPeriod = 202010
 WHERE Period = 202010
@@ -7116,7 +7120,7 @@ WHERE Period = 202010
 	)
 
 UPDATE #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '10/5/20',
 	TermPeriod = 202010
 WHERE Period = 202010
@@ -7125,7 +7129,7 @@ WHERE Period = 202010
 	)
 
 UPDATE #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '9/23/20',
 	TermPeriod = 202009
 WHERE Period = 202009
@@ -7134,16 +7138,16 @@ WHERE Period = 202009
 	)
 
 Update #Final
-SET EmploymentStatus = 'LOA', 
+SET EmploymentStatus = 'LOA',
 	LOADate = '9/21/20',
 	LOAPeriod = 202009
 WHERE Period = 202009
 	and EmployeeName in (
 	'Kyle Yu'
 	)
-	
+
 UPDATE #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '9/8/20',
 	TermPeriod = 202009
 WHERE Period = 202009
@@ -7152,7 +7156,7 @@ WHERE Period = 202009
 	)
 
 UPDATE #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '9/1/20',
 	TermPeriod = 202009
 WHERE Period = 202009
@@ -7168,7 +7172,7 @@ WHERE LOADate = '7/1/20'
 	)
 
 UPDATE #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '8/24/20',
 	TermPeriod = 202008
 WHERE Period = 202008
@@ -7177,7 +7181,7 @@ WHERE Period = 202008
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '8/6/20',
 	TermPeriod = 202008
 WHERE Period = 202008
@@ -7188,7 +7192,7 @@ WHERE Period = 202008
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '8/3/20',
 	TermPeriod = 202008
 WHERE Period = 202008
@@ -7207,7 +7211,7 @@ WHERE LOADate = '7/1/20'
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '7/21/20',
 	TermPeriod = 202007
 WHERE Period = 202007
@@ -7216,7 +7220,7 @@ WHERE Period = 202007
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '7/20/20',
 	TermPeriod = 202007
 WHERE Period = 202007
@@ -7225,7 +7229,7 @@ WHERE Period = 202007
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '7/6/20',
 	TermPeriod = 202007
 WHERE Period = 202007
@@ -7237,7 +7241,7 @@ WHERE Period = 202007
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '7/1/20',
 	TermPeriod = 202007
 WHERE Period = 202007
@@ -7247,16 +7251,16 @@ WHERE Period = 202007
 	)
 
 Update #Final
-SET EmploymentStatus = 'LOA', 
+SET EmploymentStatus = 'LOA',
 	LOADate = '7/1/20',
 	LOAPeriod = 202007
 WHERE Period = 202007
 	and EmployeeName in (
 	'Brandon Locke'
 	)
-	
+
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '7/13/20',
 	TermPeriod = 202007
 WHERE Period = 202007
@@ -7265,7 +7269,7 @@ WHERE Period = 202007
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '6/16/20',
 	TermPeriod = 202006
 WHERE Period = 202006
@@ -7274,7 +7278,7 @@ WHERE Period = 202006
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '6/12/20',
 	TermPeriod = 202006
 WHERE Period = 202006
@@ -7283,7 +7287,7 @@ WHERE Period = 202006
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '6/3/20',
 	TermPeriod = 202006
 WHERE Period = 202006
@@ -7292,7 +7296,7 @@ WHERE Period = 202006
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '6/1/20',
 	TermPeriod = 202006
 WHERE Period = 202006
@@ -7303,7 +7307,7 @@ WHERE Period = 202006
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '5/26/20',
 	TermPeriod = 202005
 WHERE Period = 202005
@@ -7312,16 +7316,16 @@ WHERE Period = 202005
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '5/8/20',
 	TermPeriod = 202005
 WHERE Period = 202005
 	and EmployeeName in (
 	'Robert Macias'
 	)
-	
+
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '5/4/20',
 	TermPeriod = 202005
 WHERE Period = 202005
@@ -7331,7 +7335,7 @@ WHERE Period = 202005
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '5/1/20',
 	TermPeriod = 202005
 WHERE Period = 202005
@@ -7341,16 +7345,16 @@ WHERE Period = 202005
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '4/29/20',
 	TermPeriod = 202004
 WHERE Period = 202004
 	and EmployeeName in (
 	'Shauntelle Walker'
 	)
-	
+
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '4/15/20',
 	TermPeriod = 202004
 WHERE Period = 202004
@@ -7359,7 +7363,7 @@ WHERE Period = 202004
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '4/6/20',
 	TermPeriod = 202004
 WHERE Period = 202004
@@ -7368,7 +7372,7 @@ WHERE Period = 202004
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '4/2/20',
 	TermPeriod = 202004
 WHERE Period = 202004
@@ -7379,7 +7383,7 @@ WHERE Period = 202004
 
 
 Update #Final
-SET EmploymentStatus = 'LOA', 
+SET EmploymentStatus = 'LOA',
 	LOADate = '6/1/20',
 	LOAPeriod = 202006
 WHERE Period = 202006
@@ -7390,7 +7394,7 @@ WHERE Period = 202006
 
 
 Update #Final
-SET EmploymentStatus = 'LOA', 
+SET EmploymentStatus = 'LOA',
 	LOADate = '3/30/20',
 	LOAPeriod = 202003
 WHERE Period = 202003
@@ -7399,7 +7403,7 @@ WHERE Period = 202003
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '3/6/20',
 	TermPeriod = 202003
 WHERE Period = 202003
@@ -7408,7 +7412,7 @@ WHERE Period = 202003
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '2/3/20',
 	TermPeriod = 202002
 WHERE Period = 202002
@@ -7417,7 +7421,7 @@ WHERE Period = 202002
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '1/31/20',
 	TermPeriod = 202001
 WHERE Period in (202001, 202002)
@@ -7426,7 +7430,7 @@ WHERE Period in (202001, 202002)
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '1/14/20',
 	TermPeriod = 202001
 WHERE Period = 202001
@@ -7436,7 +7440,7 @@ WHERE Period = 202001
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '1/7/20',
 	TermPeriod = 202001
 WHERE Period = 202001
@@ -7446,7 +7450,7 @@ WHERE Period = 202001
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '1/6/20',
 	TermPeriod = 202001
 WHERE Period = 202001
@@ -7455,7 +7459,7 @@ WHERE Period = 202001
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '1/2/20',
 	TermPeriod = 202001
 WHERE Period = 202001
@@ -7464,16 +7468,16 @@ WHERE Period = 202001
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '12/20/19',
 	TermPeriod = 201912
 WHERE Period = 201912
 	and EmployeeName in (
 	'Ian Bey'
 	)
-	
+
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '12/4/19',
 	TermPeriod = 201912
 WHERE Period = 201912
@@ -7482,7 +7486,7 @@ WHERE Period = 201912
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '12/4/19',
 	TermPeriod = 201912
 WHERE Period = 201912
@@ -7491,7 +7495,7 @@ WHERE Period = 201912
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '11/29/19',
 	TermPeriod = 201911
 WHERE Period in (201911, 201912)
@@ -7500,7 +7504,7 @@ WHERE Period in (201911, 201912)
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '11/22/19',
 	TermPeriod = 201911
 WHERE Period = 201911
@@ -7509,7 +7513,7 @@ WHERE Period = 201911
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '11/8/19',
 	TermPeriod = 201911
 WHERE Period = 201911
@@ -7518,16 +7522,16 @@ WHERE Period = 201911
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '11/4/19',
 	TermPeriod = 201911
 WHERE Period = 201911
 	and EmployeeName in (
 	'Rovic Clemente'
 	)
-	
+
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '10/29/19',
 	TermPeriod = 201910
 WHERE Period = 201910
@@ -7536,7 +7540,7 @@ WHERE Period = 201910
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '10/28/19',
 	TermPeriod = 201910
 WHERE Period = 201910
@@ -7545,7 +7549,7 @@ WHERE Period = 201910
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '10/3/19',
 	TermPeriod = 201910
 WHERE Period = 201910
@@ -7555,159 +7559,159 @@ WHERE Period = 201910
 	)
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '10/1/19',
 	TermPeriod = 201910
 WHERE Period = 201910
 	and EmployeeName in ('Benjamin Williams')
-	
+
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '9/30/19',
 	TermPeriod = 201909
 WHERE Period in (201909, 201910)
 	and EmployeeName in ('Mike Sher')
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '9/23/19',
 	TermPeriod = 201909
 WHERE Period = 201909
 	and EmployeeName in ('James Kozar')
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '9/12/19',
 	TermPeriod = 201909
 WHERE Period = 201909
 	and EmployeeName in ('Steven Vargas')
-	
+
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '7/16/19',
 	TermPeriod = 201907
 WHERE Period = 201907
 	and EmployeeName in ('Debbie Igarashi')
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '7/3/19',
 	TermPeriod = 201907
 WHERE Period = 201907
 	and EmployeeName in ('Edward Overkleeft')
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '6/28/19',
 	TermPeriod = 201906
 WHERE Period = 201906
 	and EmployeeName in ('Michael Crews')
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '6/24/19',
 	TermPeriod = 201906
 WHERE Period = 201906
 	and EmployeeName in ('Aaron Baca')
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '6/14/19',
 	TermPeriod = 201906
 WHERE Period = 201906
 	and EmployeeName in ('Devin Boyle')
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '6/12/19',
 	TermPeriod = 201906
 WHERE Period = 201906
 	and EmployeeName in ('Jennifer Menchaca')
-	
+
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '6/11/19',
 	TermPeriod = 201906
 WHERE Period = 201906
 	and EmployeeName in ('David Baker', 'Jason Cortina')
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '6/7/19',
 	TermPeriod = 201906
 WHERE Period = 201906
 	and EmployeeName in ('David Robertson')
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '6/3/19',
 	TermPeriod = 201906
 WHERE Period = 201906
 	and EmployeeName in ('Adam Ellsworth')
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '5/15/19',
 	TermPeriod = 201905
 WHERE Period = 201905
 	and EmployeeName in ('Leonard Bernal')
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '5/13/19',
 	TermPeriod = 201905
 WHERE Period = 201905
 	and EmployeeName in ('Peter Koch')
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '5/7/19',
 	TermPeriod = 201905
 WHERE Period = 201905
 	and EmployeeName in ('Braden DaBell')
-	
+
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '5/3/19',
 	TermPeriod = 201905
 WHERE Period = 201905
 	and EmployeeName in ('Gaitree Shanahan', 'Andre Yerkanyan')
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '5/1/19',
 	TermPeriod = 201905
 WHERE Period = 201905
 	and EmployeeEmail in ('david.spalding@pnmac.com')
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '4/11/19',
 	TermPeriod = 201904
 WHERE Period = 201904
 	and EmployeeName in ('Debra Major')
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '4/8/19',
 	TermPeriod = 201904
 WHERE Period = 201904
 	and EmployeeName in ('Filza Satti', 'Stephanie McCanlas')
-	
+
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '4/5/19',
 	TermPeriod = 201904
 WHERE Period = 201904
 	and EmployeeName in ('Sofia Velazquez')
 
 Update #Final
-SET EmploymentStatus = 'Terminated', 
+SET EmploymentStatus = 'Terminated',
 	TerminationDate = '4/4/19',
 	TermPeriod = 201904
 WHERE Period = 201904
 	and EmployeeName in ('Kevin Lundberg', 'Joshua Price')
-	
+
 
 Update #Final     --Nathan Request
 Set PurchaseFlag = 'N'
@@ -7729,31 +7733,31 @@ and EmployeeName = 'Alex Wong'
 
 
 
-Update #Final     --Doug Request 
+Update #Final     --Doug Request
 Set Title = 'Mgr, Sales',
     TitleGrouping = 'Manager - Sales'
 where Period = 201903
 and EmployeeName = 'Harjoyte Bisla'
 
 
---Delete from #Final   -- Doug Request    
+--Delete from #Final   -- Doug Request
 --where Period = 201903
 --and EmployeeName in ('Elizabeth Garcia', 'Geoffrey Deitrick')
 
 
-Update #Final     --Doug Request 
+Update #Final     --Doug Request
 Set Title = 'Mgr, Sales',
     TitleGrouping = 'Manager - Sales'
 where Period = 201903
 and EmployeeName = 'Timothy Esterly'
 
-Update #Final     --Doug Request 
+Update #Final     --Doug Request
 Set Title = 'Mgr, Sales',
     TitleGrouping = 'Manager - Sales'
 where Period = 201903
 and EmployeeName = 'Shaun Wilson'
 
-Update #Final     --Doug Request 
+Update #Final     --Doug Request
 Set Title = 'Mgr, Sales',
     TitleGrouping = 'Manager - Sales'
 where Period = 201903
@@ -7802,23 +7806,23 @@ WHERE EmployeeId = 'OI1204' and Period >= 201908
 Update #Final
 Set ManagerName = 'Benjamin Williams',
     PurchaseFlag = 'Y'
-where Period = 201905 
+where Period = 201905
 and EmployeeName in (/*'Jason Cortina',*/ 'Bailey Greene')
 
-Update #Final 
+Update #Final
 Set ManagerName = 'Allen Brunner',
 	PurchaseFlag = 'Y'
 where Period = 201905
 and EmployeeName in ('Randall Alford', 'Yuri Abrego')
 
 Update #Final
-Set ManagerName = 'Evan Tuchman', 
+Set ManagerName = 'Evan Tuchman',
 	PurchaseFlag = 'N'
 where Period = 201905
 and EmployeeName in ('Michael Ammari', 'Terrell Jean','William Slater', 'Elizabet Ovakimyan', 'William Hang')
 
 Update #Final
-Set ManagerName = 'Todd Bugbee', 
+Set ManagerName = 'Todd Bugbee',
 	PurchaseFlag = 'Y'
 where Period = 201905
 and EmployeeName in ('Jason Cortina')
@@ -8085,7 +8089,7 @@ and EmployeeName = 'Abigail Wilson'
 UPDATE #Final
 SET TitleGrouping = 'Dispatch Agent'
 WHERE --Period = 201908
---and 
+--and
 EmployeeName in ('Lance Crayton', 'Krista Mann')
 -----------------------------------------------------
 UPDATE #Final
@@ -10447,7 +10451,7 @@ SET F.ManagerName = S.SalesManager,
 	F.ManagerName_TwoUp = S.SiteLead,
 	F.ChannelManager = S.ChannelManager,
 	F.SiteLead = S.SiteLead
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation202010 S --Table Created To Consolidate Sales Changes with Channel Manager for Lock Goals (excluding Training and Special Projects LOs)
@@ -10521,7 +10525,7 @@ SET F.ManagerName = S.SalesManager,
 	F.ManagerName_TwoUp = S.SiteLeader, --Not SiteLead
 	F.ChannelManager = S.ChannelManager,
 	F.SiteLead = S.SiteLeader --Not SiteLead
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation202011 S --Table Created To Consolidate Sales Changes with Channel Manager for Lock Goals
@@ -10552,7 +10556,7 @@ WHERE EmployeeName in (
 ) and Period = 202011
 and TitleGrouping in ('Account Executive', 'Loan Officer')
 -----------------------------------------------------
-Update #Final    
+Update #Final
 Set Title = 'Mgr, Sales',
     TitleGrouping = 'Manager - Sales',
     ManagerName = 'DJ Ford',
@@ -10561,7 +10565,7 @@ where Period = 202011
 and EmployeeName = 'Jane Riley'
 and TitleGrouping in ('Account Executive', 'Loan Officer')
 -----------------------------------------------------
-Update #Final    
+Update #Final
 Set Title = 'NCA, Sales Manager',
     TitleGrouping = 'NCA Sales Manager',
     ManagerName = 'Kevin Price',
@@ -10569,7 +10573,7 @@ Set Title = 'NCA, Sales Manager',
 where Period = 202011
 and EmployeeName = 'Eric Jones'
 -----------------------------------------------------
-Update #Final    
+Update #Final
 Set Title = 'Mgr, Sales',
     TitleGrouping = 'Manager - Sales',
 	ManagerName = 'Olive Njombua',
@@ -10588,7 +10592,7 @@ SET Title = 'Loan Officer',
 	SiteLead = 'Shaun Eric Wilson'
 WHERE EmployeeName in (
 'Kristen Malave'
-) and Period = 202011 
+) and Period = 202011
 -----------------------------------------------------
 UPDATE #Final
 SET Title = 'Loan Officer',
@@ -10602,7 +10606,7 @@ SET Title = 'Loan Officer',
 WHERE EmployeeName in (
 'Stacie Jenkins',
 'John McGillewie'
-) and Period = 202011 
+) and Period = 202011
 -----------------------------------------------------
 UPDATE #Final
 SET Title = 'Specialist, Refinance Loan',
@@ -10620,14 +10624,14 @@ SET Title = 'Specialist, Refinance Loan',
 	ManagerEmail = 'kevin.price@pnmac.com'
 WHERE EmployeeName in (
 'Jared Fisher'
-) and Period = 202011 
+) and Period = 202011
 -----------------------------------------------------
 UPDATE #Final
 SET Title = 'Specialist, Refinance Loan',
 	TitleGrouping = 'Specialist, Refinance Loan'
 WHERE EmployeeName in (
 'Lynette Oliver'
-) and Period = 202011 
+) and Period = 202011
 -----------------------------------------------------
 UPDATE #Final
 SET Title = 'Analyst, Call Monitoring',
@@ -10644,8 +10648,8 @@ SET	ManagerName = 'Steven Garcia',
 	ManagerEmail = 'steven.garcia@pnmac.com',
 	ManagerCity = 'Roseville'
 WHERE EmployeeName in ('Bart Johnson',
-			'Isaiah Kinnon') 
-and Period = 202011 
+			'Isaiah Kinnon')
+and Period = 202011
 --=====================================================================================================
 -- DECEMBER 2020 UPDATES
 --=====================================================================================================
@@ -10690,7 +10694,7 @@ WHERE EmployeeName in (
 ) and Period = 202012
 -----------------------------------------------------
 Update #Final
-SET Title = 'Project Manager', 
+SET Title = 'Project Manager',
     TitleGrouping = 'Project Manager'
 WHERE Period = 202011
 and EmployeeName in (
@@ -10857,7 +10861,7 @@ WHERE EmployeeName in (
 ) and Period = 202012
 -----------------------------------------------------
 UPDATE #Final
-SET Title = 'Loan Officer', 
+SET Title = 'Loan Officer',
     TitleGrouping = 'Account Executive',
 	TransferDate = '12/16/2020', --requested 1/13/2021
     ManagerName = 'Afton Lambert',
@@ -10869,7 +10873,7 @@ SET Title = 'Loan Officer',
 WHERE EmployeeName = 'Mark Carter' and Period = 202012
 -----------------------------------------------------
 UPDATE #Final
-SET Title = 'Mgr, CDL Recruiting & Training', 
+SET Title = 'Mgr, CDL Recruiting & Training',
     TitleGrouping = 'Mgr, CDL Recruiting & Training',
     ManagerName = 'Shaun Eric Wilson',
     ManagerEmail = 'shaun.wilson@pnmac.com',
@@ -10878,7 +10882,7 @@ SET Title = 'Mgr, CDL Recruiting & Training',
 WHERE EmployeeName = 'Shante Viamontes' and Period = 202012
 -----------------------------------------------------
 UPDATE #Final
-SET Title = 'Specialist, Refinance Loan', 
+SET Title = 'Specialist, Refinance Loan',
     TitleGrouping = 'Specialist, Refinance Loan',
     ManagerName = 'Kevin Price',
     ManagerEmail = 'kevin.price@pnmac.com',
@@ -10890,7 +10894,7 @@ WHERE EmployeeName = 'Krystle Pierre' and Period = 202012
 --and CAST(GETDATE() AS DATE) >= '12/16/20'
 -----------------------------------------------------
 UPDATE #Final
-SET Title = 'Loan Officer', 
+SET Title = 'Loan Officer',
     TitleGrouping = 'Account Executive',
 	TransferDate = '12/16/2020',
     ManagerName = 'Adriana Gonzalez',
@@ -10903,7 +10907,7 @@ WHERE EmployeeName = 'Jeremy Rosa' and Period = 202012
 --and CAST(GETDATE() AS DATE) >= '12/16/20'
 -----------------------------------------------------
 UPDATE #Final
-SET Title = 'Spec III, Home Loan', 
+SET Title = 'Spec III, Home Loan',
     TitleGrouping = 'Spec III, Home Loan',
     ManagerName = 'Linda Parsons',
     ManagerEmail = 'linda.parsons@pnmac.com',
@@ -10914,7 +10918,7 @@ SET Title = 'Spec III, Home Loan',
 WHERE EmployeeName = 'Morgan Bui' and Period = 202012
 -----------------------------------------------------
 UPDATE #Final
-SET Title = 'Specialist, Refinance Loan', 
+SET Title = 'Specialist, Refinance Loan',
     TitleGrouping = 'Specialist, Refinance Loan',
     ManagerName = 'Natalia Navarro',
     ManagerEmail = 'natalia.navarro@pnmac.com',
@@ -12319,7 +12323,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.ChannelManager = S.[Channel Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202102 S --Table Created To Consolidate Sales Changes with Channel Manager for Lock Goals (excluding Training and Special Projects LOs)
@@ -12333,7 +12337,7 @@ where EmployeeEmail in (
 --'zanetta.hoffman@pnmac.com', --Commented out on 04/07/2021 due to change in the Directory as requested by Anand
 --'sandrea.allen@pnmac.com', --Commented out on 04/07/2021 due to change in the Directory as requested by Anand
 'laquasha.smith@pnmac.com'
-) 
+)
 
 UPDATE F
 
@@ -12343,7 +12347,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.ChannelManager = S.[Channel Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202103 S --Table Created To Consolidate Sales Changes with Channel Manager for Lock Goals (excluding Training and Special Projects LOs)
@@ -12452,7 +12456,7 @@ WHERE EmployeeName in (
 )
 and Period = 202103
 -----------------------------------------------------
-UPDATE #Final 
+UPDATE #Final
 SET Title = 'Loan Officer',
 	TitleGrouping = 'Account Executive',
 	ManagerName = 'Jay Kneeland', --changed Jeremiah to Jay 3-18-2021
@@ -12632,7 +12636,7 @@ SET Title = 'Mgr, Sales',
 	ManagerCity = 'Pasadena',
 	ChannelManager = NULL,
 	SiteLead = NULL
-WHERE EmployeeName in ('Anthony Trozera') 
+WHERE EmployeeName in ('Anthony Trozera')
 and EmployeeEmail in ('anthony.trozera@pnmac.com')
 and Period >= 202103
 
@@ -12663,7 +12667,7 @@ SET Title = 'Loan Officer',
 	City = 'Pasadena',
 	ManagerCity = 'Pasadena',
 	ManagerName_TwoUp = 'Nathan Dyce'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 ('aaron.arce@pnmac.com')
 and Period = 202104
 ---------------------------------------------------------------------------------
@@ -12671,7 +12675,7 @@ UPDATE #Final
 SET HireDate = '2021-02-22'
 WHERE EmployeeEmail in (
 'jackie.sager@pnmac.com'
-) and Period >= 202102 
+) and Period >= 202102
 --------------------------------------------------------------------------------
 UPDATE #Final
 SET HireDate = '2021-02-16'
@@ -12688,7 +12692,7 @@ WHERE EmployeeEmail in (
 'hannah.brown@pnmac.com',
 'kevin.kwiatek@pnmac.com',
 'kathryne.gates@pnmac.com'
-) and Period >= 202102 
+) and Period >= 202102
 --------------------------------------------------------------------------------
 UPDATE #Final --added on 4-12 Cherise Mejia has transitioned to Auditor I, QA  in mid March
 SET Title = 'Specialist I, Lead',
@@ -13011,7 +13015,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.ChannelManager = S.[Channel Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202104 S --Table Created To Consolidate Sales Changes with Channel Manager for Lock Goals (excluding Training and Special Projects LOs)
@@ -13036,7 +13040,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Shaun Eric Wilson',
 	ChannelManager = 'No Channel Manager',
 	SiteLead = 'Shaun Eric Wilson'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'babak.javaherpour@pnmac.com'
 ) and Period = 202104
@@ -13050,7 +13054,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Shaun Eric Wilson',
 	ChannelManager = 'No Channel Manager',
 	SiteLead = 'Shaun Eric Wilson'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'daniel.silvey@pnmac.com'
 ) and Period = 202104
@@ -13062,7 +13066,7 @@ SET ManagerName = 'Taylor Johnson',
 	ManagerName_TwoUp = 'Kevin Price',
 	ChannelManager = NULL,
 	SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'ruben.avila@pnmac.com'
 ) and Period = 202104
@@ -13074,7 +13078,7 @@ SET ManagerName = 'Kelley Christianer',
 	ManagerName_TwoUp = 'Grant Mills',
 	ChannelManager = NULL,
 	SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'diana.tulia@pnmac.com'
 ) and Period = 202104
@@ -13086,7 +13090,7 @@ SET ManagerName = 'Katherine Orabuena',
 	ManagerName_TwoUp = 'Natalia Navarro',
 	ChannelManager = NULL,
 	SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'brandon.avila1@pnmac.com'
 ) and Period = 202104
@@ -13098,7 +13102,7 @@ SET ManagerName = 'Daniel Postak',
 	ManagerName_TwoUp = 'Frank Frayer',
 	ChannelManager = NULL,
 	SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'tomas.lara@pnmac.com'
 ) and Period = 202104
@@ -13110,7 +13114,7 @@ SET ManagerName = 'Michael Dubrow',
 	ManagerName_TwoUp = 'Grant Mills',
 	ChannelManager = 'Anthony McDevitt',
 	SiteLead = 'Grant Mills'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'julian.velasco@pnmac.com',
 'christina.guzman@pnmac.com'
@@ -13123,7 +13127,7 @@ SET ManagerName = 'Juanita Moreno',
 	ManagerName_TwoUp = 'Natalia Navarro',
 	ChannelManager = NULL,
 	SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'mariah.rosario@pnmac.com'
 ) and Period = 202104
@@ -13139,7 +13143,7 @@ where EmployeeEmail in
 --	F.ChannelManager = S.ChannelManager,
 --	F.SiteLead = S.SiteLead,
 --	F.City = S.City
-	
+
 --FROM #Final F
 
 --inner join #Final S
@@ -13218,7 +13222,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Rich Ferre',
 	ChannelManager = 'Matt Moebius',
     SiteLead = 'Rich Ferre'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'barry.clay@pnmac.com',
 'jason.thomas@pnmac.com',
@@ -13289,7 +13293,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site],
 	F.ManagerCity = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202105 S --Table Created To Consolidate Sales Changes with Channel Manager for Lock Goals (excluding Training and Special Projects LOs)
@@ -13298,7 +13302,7 @@ ON F.EmployeeEmail = S.[Employee Email]
 WHERE F.Period = 202105
 -----------------------------------------------------
 UPDATE #Final
-SET ManagerName = 'Tiffany Lewis', 
+SET ManagerName = 'Tiffany Lewis',
 	ManagerEmail = 'tiffany.lewis@pnmac.com',
 	ManagerCity = 'Tampa',
 	ManagerName_TwoUp = 'Damon Johnson',
@@ -13334,7 +13338,7 @@ SET ManagerName = 'Pia Collins',
 	ManagerName_TwoUp = 'Nathan Dyce',
 	ChannelManager = 'Evan Tuchman',
     SiteLead = 'Nathan Dyce'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'jenny.twaddle@pnmac.com',
 'jazlyn.briant@pnmac.com'
@@ -13348,7 +13352,7 @@ SET ManagerName = 'Dominic Cifarelli',
 	ManagerName_TwoUp = 'Nathan Dyce',
 	ChannelManager = 'Evan Tuchman',
     SiteLead = 'Nathan Dyce'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'madison.brown@pnmac.com',
 'sara.aguayo@pnmac.com'
@@ -13358,7 +13362,7 @@ and Period = 202105
 UPDATE #Final
 SET Title = 'Loan Officer',
 	TitleGrouping = 'Account Executive'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'anastasios.marcopulos@pnmac.com',
 'david.gharibian@pnmac.com',
@@ -13378,7 +13382,7 @@ SET	ManagerName = 'Aizen Malki',
 	ManagerName_TwoUp = 'Nathan Dyce',
 	ChannelManager = NULL,
     SiteLead = NULL
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'joseph.mooney@pnmac.com',
 'romel.nicolas@pnmac.com'
@@ -13394,7 +13398,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Nathan Dyce',
 	ChannelManager = 'Adam Adoree',
     SiteLead = 'Nathan Dyce'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'brian.smalley@pnmac.com',
 'connie.serrano@pnmac.com',
@@ -13411,7 +13415,7 @@ UPDATE #Final
 SET Department = 'MFD CDL Prod Supportt',
 	Title = 'Mgr I, Pipeline Account',
 	TitleGrouping = 'Mgr I, Pipeline Account',
-	ManagerName = 'Steve Schmalen', 
+	ManagerName = 'Steve Schmalen',
 	ManagerEmail = 'stephen.schmalen@pnmac.com',
 	ManagerCity = 'WestlakeLakeview',
 	ChannelManager = NULL,
@@ -13431,7 +13435,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Shaun Eric Wilson',
 	ChannelManager = 'No Channel Manager',
     SiteLead = 'Shaun Eric Wilson'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'kaitlin.smith@pnmac.com'
 )
@@ -13446,7 +13450,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Shaun Eric Wilson',
 	ChannelManager = 'No Channel Manager',
     SiteLead = 'Shaun Eric Wilson'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'agustinatina.castro@pnmac.com'
 )
@@ -13461,7 +13465,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Shaun Eric Wilson',
 	ChannelManager = 'No Channel Manager',
     SiteLead = 'Shaun Eric Wilson'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'johncarlo.menjivar@pnmac.com'
 )
@@ -13472,7 +13476,7 @@ and Period = 202105
 UPDATE #Final
 SET Title = 'Loan Officer',
 	TitleGrouping = 'Account Executive'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'aaron.garcia@pnmac.com',
 'ashley.grajo@pnmac.com',
@@ -13493,7 +13497,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site],
 	F.ManagerCity = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202106 S --Table Created To Consolidate Sales Changes with Channel Manager for Lock Goals (excluding Training and Special Projects LOs)
@@ -13511,7 +13515,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'DJ Ford',
 	ChannelManager = 'Orlando Cassara',
     SiteLead = 'DJ Ford'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'travis.vorbeck@pnmac.com'
 )
@@ -13526,7 +13530,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Nathan Dyce',
 	ChannelManager = 'Evan Tuchman',
     SiteLead = 'Nathan Dyce'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'sevak.bazikyan@pnmac.com'
 )
@@ -13541,7 +13545,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Tara Kinney',
 	ChannelManager = 'No Channel Manager',
     SiteLead = 'Tara Kinney'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'roger.henkin@pnmac.com'
 )
@@ -13556,7 +13560,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Nathan Dyce',
 	ChannelManager = 'Jason Massie',
     SiteLead = 'Nathan Dyce'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'johncarlo.menjivar@pnmac.com'
 )
@@ -13571,7 +13575,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'DJ Ford',
 	ChannelManager = 'Orlando Cassara',
     SiteLead = 'DJ Ford'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'denise.meck@pnmac.com'
 )
@@ -13586,7 +13590,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'DJ Ford',
 	ChannelManager = 'Damon Johnson',
     SiteLead = 'DJ Ford'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'jonathan.garcia@pnmac.com',
 'richard.herrin@pnmac.com'
@@ -13603,7 +13607,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Olive Njombua',
 	ChannelManager = 'Andree Pinson',
     SiteLead = 'Olive Njombua'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'andrew.shepherd@pnmac.com'
 )
@@ -13665,7 +13669,7 @@ SET --NCAFlag = 'N',
 	Title = 'Loan Officer',
 	TitleGrouping = 'Account Executive'
 WHERE EmployeeName = 'Preston Orellana'
-and EmployeeEmail in	
+and EmployeeEmail in
 	(
 	'preston.orellana@pnmac.com'
 	)
@@ -13682,7 +13686,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site],
 	F.ManagerCity = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202107 S --Table Created To Consolidate Sales Changes with Channel Manager for Lock Goals (excluding Training and Special Projects LOs)
@@ -13717,7 +13721,7 @@ and Period in (202107, 202108)--Added August Due to HR Delay
 UPDATE #Final
 SET Title = 'Loan Officer',
 	TitleGrouping = 'Account Executive'
-WHERE EmployeeEmail in	
+WHERE EmployeeEmail in
 	(
 	'pavandeep.mann@pnmac.com'
 	)
@@ -13727,7 +13731,7 @@ UPDATE #Final
 SET NCAFlag = 'Y',
 	Title = 'Loan Officer',
 	TitleGrouping = 'Account Executive'
-WHERE EmployeeEmail in	
+WHERE EmployeeEmail in
 	(
 	'grae.carson@pnmac.com'
 	)
@@ -13783,7 +13787,7 @@ SET Title = 'Specialist I, Home Loan',
 	ManagerName_TwoUp = 'Tami Wallace',
 	ChannelManager = NULL,
     SiteLead = NULL
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'john.mcgillewie@pnmac.com'
 )
@@ -13798,7 +13802,7 @@ SET Title = 'Specialist II, Home Loan',
 	ManagerName_TwoUp = 'Jenny Boker',
 	ChannelManager = NULL,
     SiteLead = NULL
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'monica.ochoa@pnmac.com'
 )
@@ -13827,7 +13831,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Nathan Dyce',
 	ChannelManager = 'Evan Tuchman',
     SiteLead = 'Nathan Dyce'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'aaron.garcia@pnmac.com'
 )
@@ -13842,7 +13846,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'DJ Ford',
 	ChannelManager = 'Adriana Gonzalez',
     SiteLead = 'DJ Ford'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'joseph.hagel@pnmac.com',
 'blake.ryan@pnmac.com'
@@ -13859,7 +13863,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Nathan Dyce',
 	ChannelManager = 'Evan Tuchman',
     SiteLead = 'Nathan Dyce'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'cynthia.perez@pnmac.com'
 )
@@ -13874,7 +13878,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Nathan Dyce',
 	ChannelManager = 'Jason Massie',
     SiteLead = 'Nathan Dyce'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'erik.bates@pnmac.com'
 )
@@ -13917,7 +13921,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site],
 	F.ManagerCity = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202108 S --Table Created To Consolidate Sales Changes with Channel Manager for Lock Goals (excluding Training and Special Projects LOs)
@@ -13961,7 +13965,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Rich Ferre',
 	ChannelManager = 'Ben Erickson',
     SiteLead = 'Rich Ferre'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'ed.vandervelde@pnmac.com'
 )
@@ -13974,7 +13978,7 @@ SET ManagerName = 'Gary Darden',
 	ManagerName_TwoUp = 'Rich Ferre',
 	ChannelManager = 'Ben Erickson',
     SiteLead = 'Rich Ferre'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'barry.clay@pnmac.com',
 'jason.martinez@pnmac.com',
@@ -13994,7 +13998,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Shaun Eric Wilson',
 	ChannelManager = 'No Channel Manager',
     SiteLead = 'Shaun Eric Wilson'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'tatum.thompson@pnmac.com',
 'madison.ware@pnmac.com',
@@ -14011,7 +14015,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Shaun Eric Wilson',
 	ChannelManager = 'No Channel Manager',
     SiteLead = 'Shaun Eric Wilson'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'matthew.mcglinn@pnmac.com',
 'rachel.vasquez@pnmac.com'
@@ -14027,7 +14031,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Shaun Eric Wilson',
 	ChannelManager = 'No Channel Manager',
     SiteLead = 'Shaun Eric Wilson'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'shalimar.santiago@pnmac.com'
 )
@@ -14067,7 +14071,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'DJ Ford',
 	ChannelManager = 'Adriana Gonzalez',
     SiteLead = 'DJ Ford'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'douglas.vorbeck@pnmac.com'
 )
@@ -14082,7 +14086,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Rich Ferre',
 	ChannelManager = 'Ben Erickson',
     SiteLead = 'Rich Ferre'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'derek.beutel@pnmac.com',
 'dominique.benton@pnmac.com',
@@ -14099,7 +14103,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'DJ Ford',
 	ChannelManager = 'Damon Johnson',
     SiteLead = 'DJ Ford'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'nadim.alemian@pnmac.com'
 )
@@ -14128,7 +14132,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Tara Kinney',
 	ChannelManager = 'No Channel Manager',
     SiteLead = 'Tara Kinney'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'russell.thorne@pnmac.com'
 )
@@ -14143,7 +14147,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Tara Kinney',
 	ChannelManager = 'No Channel Manager',
     SiteLead = 'Tara Kinney'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'tonya.watkins@pnmac.com'
 )
@@ -14158,7 +14162,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Kevin Price',
 	ChannelManager = 'Frank Frayer',
     SiteLead = 'Kevin Price'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'roberto.montero@pnmac.com'
 )
@@ -14173,7 +14177,7 @@ SET Title = 'Specialist I, Home Loan',
 	ManagerName_TwoUp = 'Ruben Berger',
 	ChannelManager = NULL,
     SiteLead = NULL
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'robyn.moore@pnmac.com'
 )
@@ -14189,7 +14193,7 @@ SET Title = 'Specialist, Loan Refinance',
 	ManagerName_TwoUp = 'Kevin Price',
 	ChannelManager = 'Frank Frayer',
     SiteLead = 'Kevin Price'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'bart.johnson@pnmac.com'
 )
@@ -14205,7 +14209,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Shaun Eric Wilson',
 	ChannelManager = 'No Channel Manager',
     SiteLead = 'Shaun Eric Wilson'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'joseph.hagel@pnmac.com','nadim.alemian@pnmac.com','thieulong.hoang@pnmac.com'
 )
@@ -14220,7 +14224,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Shaun Eric Wilson',
 	ChannelManager = NULL,
     SiteLead = NULL
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'conner.ricca@pnmac.com',
 'dylan.chung@pnmac.com',
@@ -14280,7 +14284,7 @@ and Period = 202108
 --	F.ManagerCity = F2.ManagerCity,
 --	F.Title = F2.Title,
 --	F.TitleGrouping = F2.TitleGrouping
-	
+
 --FROM #Final F
 
 --inner join #Final F2
@@ -14297,7 +14301,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site],
 	F.ManagerCity = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202109 S --Table Created To Consolidate Sales Changes with Channel Manager for Lock Goals (excluding Training and Special Projects LOs)
@@ -14314,7 +14318,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Nathan Dyce',
 	ChannelManager = 'Adam Adoree',
     SiteLead = 'Nathan Dyce'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'michiko.solon@pnmac.com'
 )
@@ -14354,7 +14358,7 @@ SET ManagerName = 'Benjamin Wharton',
 	SiteLead = 'Nathan Dyce',
 	City = 'Pasadena',
 	ManagerCity = 'Pasadena'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'kris.bacani@pnmac.com',
 'nicholas.spencer@pnmac.com',
@@ -14404,7 +14408,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Olive Njombua',
 	ChannelManager = 'Aaron Hatfield',
     SiteLead = 'Olive Njombua'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'andrew.mccullough@pnmac.com',
 'shelbi.janssen@pnmac.com'
@@ -14450,7 +14454,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Rich Ferre',
 	ChannelManager = 'Ryan Finkas',
     SiteLead = 'Rich Ferre'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'khadeeja.ali@pnmac.com'
 )
@@ -14465,7 +14469,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Rich Ferre',
 	ChannelManager = 'Ryan Finkas',
     SiteLead = 'Rich Ferre'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'tatum.thompson@pnmac.com'
 )
@@ -14478,7 +14482,7 @@ SET ManagerName = 'Gary Darden',
 	ManagerName_TwoUp = 'Rich Ferre',
 	ChannelManager = 'Ben Erickson',
     SiteLead = 'Rich Ferre'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'angelica.williams1@pnmac.com'
 )
@@ -14493,7 +14497,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'DJ Ford',
 	ChannelManager = 'Damon Johnson',
     SiteLead = 'DJ Ford'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'maritza.chiaway@pnmac.com',
 'james.young@pnmac.com',
@@ -14541,7 +14545,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Shaun Eric Wilson',
 	ChannelManager = 'No Channel Manager',
     SiteLead = 'Shaun Eric Wilson'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'scott.zeller@pnmac.com',
 'miranda.bartlett@pnmac.com',
@@ -14573,7 +14577,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Nathan Dyce',
 	ChannelManager = 'Jason Massie',
     SiteLead = 'Nathan Dyce'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'asiah.dorsey@pnmac.com'
 )
@@ -14588,7 +14592,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Nathan Dyce',
 	ChannelManager = 'Adam Adoree',
 	SiteLead = 'Nathan Dyce'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'tanner.barge@pnmac.com'
 )
@@ -14603,7 +14607,7 @@ SET Title = 'Specialist, Loan Refinance',
 	ManagerName_TwoUp = 'Grant Mills',
 	ChannelManager = NULL,
 	SiteLead = NULL
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'xavier.moya@pnmac.com'
 )
@@ -14632,7 +14636,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Shaun Eric Wilson',
 	ChannelManager = 'No Channel Manager',
     SiteLead = 'Shaun Eric Wilson'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'dustin.fletcher@pnmac.com'
 )
@@ -14647,7 +14651,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'DJ Ford',
 	ChannelManager = 'Adam Adoree',
     SiteLead = 'DJ Ford'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'amanda.tubbs@pnmac.com'
 )
@@ -14662,7 +14666,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Kevin Price',
 	ChannelManager = 'Natalia Navarro',
 	SiteLead = 'Kevin Price'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'susan.flores@pnmac.com'
 ) and Period = 202109
@@ -14680,7 +14684,7 @@ SET F.ManagerName = F2.ManagerName,
 	F.ManagerCity = F2.ManagerCity,
 	F.Title = F2.Title,
 	F.TitleGrouping = F2.TitleGrouping
-	
+
 FROM #Final F
 
 inner join #Final F2
@@ -14698,7 +14702,7 @@ SET PurchaseFlag = 'Y',
 	ManagerName_TwoUp = 'Doug Jones',
 	ChannelManager = NULL,
 	SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'nathan.dyce@pnmac.com'
 ) and Period = 202110
@@ -14712,7 +14716,7 @@ SET Title = 'SVP, Reg Sales Leader',
 	--ManagerName_TwoUp = 'Doug Jones',
 	ChannelManager = NULL,
 	SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'adam.adoree@pnmac.com'
 ) and Period = 202110
@@ -14750,7 +14754,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site],
 	F.ManagerCity = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202110 S
@@ -14919,7 +14923,7 @@ WHERE EmployeeEmail in (
 --	F.ManagerCity = F2.ManagerCity,
 --	F.Title = F2.Title,
 --	F.TitleGrouping = F2.TitleGrouping
-	
+
 --FROM #Final F
 
 --inner join #Final F2
@@ -14936,7 +14940,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site],
 	F.ManagerCity = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202111 S
@@ -15146,7 +15150,7 @@ UPDATE #Final
 SET PurchaseFlag = 'Y'
 WHERE ManagerEmail in (
 'nicole.stober@pnmac.com'
-) 
+)
 and TitleGrouping = 'Account Executive'
 and Period >= 202111
 
@@ -15293,7 +15297,7 @@ WHERE EmployeeEmail in (
  'justin.duncan@pnmac.com'
 ) and Period = 202111
 ---------------------------------------------------------------------------------
-UPDATE #Final	
+UPDATE #Final
 SET CDLSales = 'Y',
 	TenuredFlag ='N',
 	Department = 'CDL Sales',
@@ -15389,9 +15393,9 @@ WHERE EmployeeEmail in (
 --	F.ManagerCity = F2.ManagerCity,
 --	F.Title = F2.Title,
 --	F.TitleGrouping = F2.TitleGrouping
-	
+
 --FROM #Final F
- 
+
 --inner join #Final F2
 --ON F.EmployeeEmail = F2.EmployeeEmail and F2.Period = 202111 and F2.TitleGrouping in ('Account Executive', 'Loan Officer')
 
@@ -15406,7 +15410,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site],
 	F.ManagerCity = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202112 S
@@ -15423,7 +15427,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Adam Adoree',
 	ChannelManager = 'Jason Massie',
     SiteLead = 'Adam Adoree'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'roudvik.abdalian@pnmac.com'
 )
@@ -15561,7 +15565,7 @@ WHERE EmployeeEmail in (
 'mary.karapetyan@pnmac.com'
 ) and Period = 202112
 ---------------------------------------------------------------------------------
-UPDATE #Final	
+UPDATE #Final
 SET Title = 'Loan Officer',
     TitleGrouping = 'Account Executive'
 WHERE EmployeeEmail in (
@@ -15573,7 +15577,7 @@ WHERE EmployeeEmail in (
 ,'victoria.groeger@pnmac.com'
 ) and Period = 202112
 ---------------------------------------------------------------------------------
-UPDATE #Final	
+UPDATE #Final
 SET Title = 'LO, New Customer Acq',
     TitleGrouping = 'Account Executive'
 WHERE EmployeeEmail in (
@@ -15718,9 +15722,9 @@ WHERE EmployeeEmail in (
 
 --From #Final SM
 
---Where 
---((Select DivisionGroup 
---From #Final 
+--Where
+--((Select DivisionGroup
+--From #Final
 --Where EmployeeId = SM.ManagerId
 --and Period = SM.Period) = 'MFD'
 --or SM.ManagerId in (Select e.EmployeeId
@@ -15735,7 +15739,7 @@ WHERE EmployeeEmail in (
 --and DivisionGroup Is Null
 
 --Set @updatecounter = @updatecounter + 1
- 
+
 --End
 -----------------------------------------------------
 
@@ -15748,7 +15752,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site],
 	F.ManagerCity = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202201 S
@@ -15764,7 +15768,7 @@ SET Title = 'FVP, Regional Sales Leader',
 	ManagerCity = 'Pasadena',
 	ChannelManager = NULL,
 	SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'ryan.finkas@pnmac.com'
 ) and Period = 202201
@@ -15777,7 +15781,7 @@ SET ManagerName = 'Ryan Finkas',
 	ChannelManager = NULL,
 	SiteLead = NULL
 WHERE EmployeeEmail in (
-	'ben.erickson@pnmac.com' 
+	'ben.erickson@pnmac.com'
 	,'matthew.moebius@pnmac.com')
 	and Period = 202201
 ----------------------------------------------------------------------------------
@@ -16021,7 +16025,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site],
 	F.ManagerCity = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202202 S
@@ -16343,7 +16347,7 @@ WHERE EmployeeEmail in (
 'roberto.annoni@pnmac.com'
 )
 and Period = 202201
-	
+
 UPDATE #Final--UPDATED ON 10/23/2020 AS REQUESTED BY SALES
 SET ManagerName_TwoUp = 'Shaun Eric Wilson'
 WHERE ManagerName in ('Brian Schooler', 'Josh Nelson')
@@ -16358,7 +16362,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site],
 	F.ManagerCity = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202203 S
@@ -16471,7 +16475,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site],
 	F.ManagerCity = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202204 S
@@ -16533,7 +16537,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Kevin Price',
 	ChannelManager = 'Natalia Navarro',
 	SiteLead = 'Kevin Price'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'katherine.orabuena@pnmac.com'
 ) and Period = 202204
@@ -16623,7 +16627,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site],
 	F.ManagerCity = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202205 S
@@ -16640,7 +16644,7 @@ SET Title = 'LO, New Customer Acq',
 	ManagerName_TwoUp = 'Kevin Price',
 	ChannelManager = 'No Channel Manager',
 	SiteLead = 'Kevin Price'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
 'taylor.johnson@pnmac.com'
 ,'katherine.orabuena@pnmac.com'
@@ -16658,7 +16662,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Adam Adoree',
 	ChannelManager = 'Eddie Machuca',
 	SiteLead = 'Adam Adoree'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'johncarlo.menjivar@pnmac.com'
 ,'felix.kim@pnmac.com'
@@ -16668,7 +16672,7 @@ where EmployeeEmail in
 UPDATE #Final
 SET Title = 'Loan Officer',
 	TitleGrouping = 'Account Executive'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'felix.kim@pnmac.com'
 ,'aaron.arce@pnmac.com'
@@ -16700,7 +16704,7 @@ where EmployeeEmail in
 UPDATE #Final
 SET Title = 'LO, New Customer Acq',
 	TitleGrouping = 'Account Executive'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
  'brock.walker@pnmac.com'
 ,'taylor.johnson@pnmac.com'
@@ -16778,7 +16782,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Kevin Price',
 	ChannelManager = 'No Channel Manager',
 	SiteLead = 'Kevin Price'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'nicholas.schmidt@pnmac.com'
 ) and Period = 202205
@@ -16792,7 +16796,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Kevin Price',
 	ChannelManager = 'No Channel Manager',
 	SiteLead = 'Kevin Price'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'matt.ellis@pnmac.com'
 ) and Period = 202205
@@ -16806,7 +16810,7 @@ SET Title = 'Loan Officer',
 	ManagerName_TwoUp = 'Kevin Price',
 	ChannelManager = 'No Channel Manager',
 	SiteLead = 'Kevin Price'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'rafael.sanchez@pnmac.com'
 ) and Period = 202205
@@ -16824,9 +16828,9 @@ where EmployeeEmail in
 --	F.ManagerCity = F2.ManagerCity,
 --	F.Title = F2.Title,
 --	F.TitleGrouping = F2.TitleGrouping
-	
+
 --FROM #Final F
- 
+
 --inner join #Final F2
 --ON F.EmployeeEmail = F2.EmployeeEmail and F2.Period = 202205 and F2.TitleGrouping in ('Account Executive', 'Loan Officer')
 
@@ -16841,7 +16845,7 @@ SET F.ManagerName = S.[Sales Manager],
 	F.SiteLead = S.[Site Leader],
 	F.City = S.[Site],
 	F.ManagerCity = S.[Site]
-	
+
 FROM #Final F
 
 inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202206 S
@@ -16858,7 +16862,7 @@ SET Title = 'Mgr, Sales',
 	ManagerName_TwoUp = 'Ryan Finkas',
 	ChannelManager = NULL,
 	SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'ben.erickson@pnmac.com',
 'matthew.moebius@pnmac.com'
@@ -16873,7 +16877,7 @@ SET Title = 'Mgr, Sales',
 	ManagerName_TwoUp = 'Adam Adoree',
 	ChannelManager = NULL,
 	SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'jason.massie@pnmac.com'
 ) and Period = 202206
@@ -16881,7 +16885,7 @@ where EmployeeEmail in
 UPDATE #Final
 SET Title = 'Loan Officer',
 	TitleGrouping = 'Account Executive'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'austin.schreibman@pnmac.com',
 'edith.torosyan@pnmac.com',
@@ -16917,7 +16921,7 @@ where EmployeeEmail in
 UPDATE #Final
 SET Title = 'Loan Officer',
 	TitleGrouping = 'Account Executive'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'corey.case@pnmac.com'
 ) and Period = 202206
@@ -16931,7 +16935,7 @@ SET Title = 'Mgr, Sales',
 	ManagerName_TwoUp = 'Adam Adoree',
 	ChannelManager = NULL,
 	SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
  'david.malki@pnmac.com'
 ,'aubray.breaux@pnmac.com'
@@ -16948,7 +16952,7 @@ SET Title = 'Mgr, Sales',
 	ManagerName_TwoUp = 'DJ Ford',
 	ChannelManager = NULL,
 	SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
  'bill.quigley@pnmac.com'
 ,'macy.gunderson@pnmac.com'
@@ -16964,7 +16968,7 @@ SET ManagerName = 'Afton Lambert',
 	ManagerName_TwoUp = 'Tara Kinney',
 	ChannelManager = NULL,
 	SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'garrett.bateman@pnmac.com'
 ,'robel.moreno@pnmac.com'
@@ -16980,7 +16984,7 @@ SET Title = 'Mgr, Sales',
 	ManagerName_TwoUp = 'Ryan Finkas',
 	ChannelManager = NULL,
 	SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
  'jeffries.johnson@pnmac.com'
 ,'marc.henry@pnmac.com'
@@ -16996,7 +17000,7 @@ SET ManagerName = 'Damon Johnson',
 	ManagerName_TwoUp = 'DJ Ford',
 	ChannelManager = 'No Channel Manager',
 	SiteLead = 'DJ Ford'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
  'michael.payne@pnmac.com'
 ) and Period = 202206
@@ -17008,7 +17012,7 @@ SET ManagerName = 'Orlando Cassara',
 	ManagerName_TwoUp = 'DJ Ford',
 	ChannelManager = 'No Channel Manager',
 	SiteLead = 'DJ Ford'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
  'nader.snobar@pnmac.com'
 ) and Period = 202206
@@ -17020,7 +17024,7 @@ SET ManagerName = 'Matt Moebius',
 	ManagerName_TwoUp = 'Ryan Finkas',
 	ChannelManager = 'No Channel Manager',
 	SiteLead = 'Ryan Finkas'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
  'reid.wright@pnmac.com'
 ) and Period = 202206
@@ -17032,7 +17036,7 @@ SET ManagerName = 'Dwight Dickey',
 	ManagerName_TwoUp = 'Tara Kinney',
 	ChannelManager = 'Afton Lambert',
 	SiteLead = 'Tara Kinney'
-where EmployeeEmail in 
+where EmployeeEmail in
 (
  'rod.walker@pnmac.com'
 ) and Period = 202206
@@ -17046,7 +17050,7 @@ SET Title = 'VP, Retail Channel Management',
 	ManagerName_TwoUp = 'Stephen Brandt',
 	ChannelManager = NULL,
 	SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
  'adriana.gonzalez@pnmac.com'
 ) and Period = 202206
@@ -17058,7 +17062,7 @@ SET ManagerName = 'Carl Illum',
 	ManagerName_TwoUp = 'Stephen Brandt',
 	ChannelManager = NULL,
 	SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
  'shante.viamontes@pnmac.com'
 ) and Period = 202206
@@ -17086,7 +17090,7 @@ SET Title = 'Mgr, Sales',
     ManagerName_TwoUp = 'Ryan Finkas',
     ChannelManager = NULL,
     SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'harjoyte.bisla@pnmac.com'
 ) and Period = 202206
@@ -17168,7 +17172,7 @@ SET ManagerName = 'Tara Kinney',
     ManagerName_TwoUp = 'Scott Bridges',
     ChannelManager = NULL,
     SiteLead = NULL
-where EmployeeEmail in 
+where EmployeeEmail in
 (
 'garrett.bateman@pnmac.com'
 ,'robel.moreno@pnmac.com'
@@ -17219,7 +17223,7 @@ UPDATE F
 
 SET F.ManagerID = S.EmployeeID
 
-	
+
 FROM #Final F
 
 inner join #Final S--rrd.dbo.HUB_CDL_Staffing S --NOTE
@@ -17830,7 +17834,7 @@ SET SiteLead = CASE
 					WHEN City in ('Summerlin', 'Roseville') AND Period > 202112 THEN 'Ryan Finkas'
 					ELSE NULL
 				END
-WHERE 
+WHERE
 TitleGrouping in ('Account Executive', 'Loan Officer')
 and (TerminationDate is null or TerminationDate >= '1/1/2020')
 and SiteLead is null
@@ -17896,13 +17900,13 @@ SET SiteLead = CASE
 ----------
 UPDATE #Final
 SET ManagerName_TwoUp = SiteLead
-WHERE 
+WHERE
 TitleGrouping in ('Account Executive', 'Loan Officer') and Period >= 202011
 -----------------------------------------------------------------------
 UPDATE #Final
 SET ManagerName_TwoUp = 'Kevin Price',
 	SiteLead = 'Kevin Price'
-WHERE 
+WHERE
 TitleGrouping in ('Account Executive', 'Loan Officer')
 and Period >= 202011
 and SiteLead = 'Grant Mills'
@@ -17911,7 +17915,7 @@ and ManagerName in ('Eric Jones', 'Steven Garcia')
 UPDATE #Final --All NCA is reporting to Kevin Price as of May 2022
 SET ManagerName_TwoUp = 'Kevin Price',
 	SiteLead = 'Kevin Price'
-WHERE 
+WHERE
 Period >= 202205
 and SiteLead = 'Grant Mills'
 and ManagerName_TwoUp = 'Grant Mills'
@@ -17993,7 +17997,7 @@ and Period = 202106
 UPDATE #Final
 SET NCAFlag = 'N'
 WHERE EmployeeName = 'Preston Orellana'
-and EmployeeEmail in	
+and EmployeeEmail in
 	(
 	'preston.orellana@pnmac.com'
 	)
@@ -18002,7 +18006,7 @@ and Period in (202105, 202106, 202107)
 UPDATE #Final
 SET NCAFlag = 'N'
 WHERE EmployeeName = 'Cynthia Perez'
-and EmployeeEmail in	
+and EmployeeEmail in
 	(
 	'cynthia.perez@pnmac.com'
 	)
@@ -18042,13 +18046,13 @@ WHERE TitleGrouping in ('Account Executive', 'Loan Officer') and EmployeeName in
 'Barry Clay II',
 'Rodney Perkins'
 )
-and Period between 202009 and 202205 
+and Period between 202009 and 202205
 -----------------------
 UPDATE #Final
 SET SpecialProjectsFlag = 'Y'
 WHERE TitleGrouping in ('Account Executive', 'Loan Officer')
 and Title in ('LO, Special Projects', 'Special Projects Loan Officer', ' Special Projects Loan Officer')
-and Period between 202012 and 202205 
+and Period between 202012 and 202205
 -----------------------
 UPDATE #Final
 SET SpecialProjectsFlag = 'Y'
@@ -18117,7 +18121,7 @@ Set PurchaseFlag = 'Y'
 Where
 (ManagerName in (
 'John Anding')
-or 
+or
 EmployeeName = 'John Anding')
 and Period >= 202002
 
@@ -18126,7 +18130,7 @@ Set PurchaseFlag = 'Y'
 Where
 ManagerName in (
 'Todd Bugbee')
-or 
+or
 EmployeeName = 'Todd Bugbee'
 
 Update #Final
@@ -18262,7 +18266,7 @@ WHERE Period between 202203 and 202205 and (EmployeeEmail in ( --NEEDS TO CONTIN
 'andrew.pena@pnmac.com',
 'susan.flores@pnmac.com',
 'isaac.trujillo@pnmac.com')
-OR 
+OR
 ManagerName = 'Taylor Johnson')
 
 UPDATE #Final
@@ -18366,7 +18370,7 @@ ON F.EmployeeEmail = C.EmployeeEmail-----------------------------------
 
 UPDATE #Final
 SET CDLSales_CollegeLOProgram = 'Y'
-WHERE EmployeeEmail in 
+WHERE EmployeeEmail in
 (
  'amber.prasopoulos@pnmac.com'
 , 'andrew.liu@pnmac.com'
@@ -18386,7 +18390,7 @@ and CDLSales = 'N'
 
 UPDATE #Final
 SET CDLSales = 'Y'
-WHERE TitleGrouping in ('Manager - Sales') 
+WHERE TitleGrouping in ('Manager - Sales')
 and Department in ('Plano, TX CC Sales #4', 'Pasadena, CA CC Sales #3', 'Sacramento CA CC Sale #4')
 and CDLSales = 'N'
 
@@ -18534,7 +18538,7 @@ inner join rrd.dbo.HUBSupport_CDL_Staffing_SalesAllocation_WithGoals_202109 H
 ON F.EmployeeEmail = H.[Employee Email] and H.Training = 'Y'-------------------------------------
 
 --WHERE F.CDLSales = 'Y'
-   
+
 /*LEGACY TRAINING END DATE LOGIC: THOSE WITH 4 - ARE TO BE INCLUDED BACK IN CASE*/
 ----UPDATE #Final
 ----SET TrainingEndDate = '6/28/2019',
@@ -18650,15 +18654,15 @@ ON F.EmployeeEmail = H.[Employee Email] and H.Training = 'Y'--------------------
 ----'Severiano Rico',
 ----'Vartan Davtyan'
 ----)
-				  
+
 ---------------------------------------------------------
--------- Below are still in training and anticipated to be trained by 12/1, 
+-------- Below are still in training and anticipated to be trained by 12/1,
 -------- Please verify this once the graduation end date is known - FS
 ---------------------------------------------------------
 ----/*REMOVED DUE TO UPDATED DATES
 ----UPDATE #Final
 ----SET TrainingEndDate = '12/1/2019'
-----WHERE 
+----WHERE
 ----EmployeeEmail in (
 ----'adam.emmert@pnmac.com',
 ----'amelia.stratton@pnmac.com',
@@ -18916,7 +18920,7 @@ WHERE EmployeeName in (
 'Krystan Keyes',
 'Gary Sahakian',
 'Eric Aron'
-) 
+)
 
 UPDATE #Final
 SET TrainingStartDate = '11/18/2019'
@@ -18924,7 +18928,7 @@ WHERE EmployeeName in (
 'Krystan Keyes',
 'Gary Sahakian',
 'Eric Aron'
-) 
+)
 
 UPDATE #Final
 SET TrainingStartDate = '01/24/2022'
@@ -19083,12 +19087,12 @@ WHERE TrainingEndDate is not null and TrainingStartDate is null
 --------------------------------------------------------
 /*TRANSFER DATE SECTION*/
 UPDATE #Final
-Set TransferDate = '04/01/22' 
+Set TransferDate = '04/01/22'
 where Period >= 202204 and EmployeeEmail in (
 	 'tate.fackrell@pnmac.com'
 	 )
 UPDATE #Final
-Set TransferDate = '03/16/22' 
+Set TransferDate = '03/16/22'
 where Period = 202203 and EmployeeEmail in (
 	  'argishti.tsaturyan@pnmac.com'
 	 ,'carina.ramos@pnmac.com'
@@ -19103,7 +19107,7 @@ where Period = 202203 and EmployeeEmail in (
 	 ,'sydney.ferre@pnmac.com'
 	 )
 UPDATE #Final
-Set TransferDate = '03/01/22' 
+Set TransferDate = '03/01/22'
 where Period = 202203 and EmployeeEmail in (
 	 'corey.marcelin@pnmac.com'
 	,'daniel.kier@pnmac.com'
@@ -19126,14 +19130,14 @@ where Period = 202203 and EmployeeEmail in (
 	)
 
 Update #Final
-Set TransferDate = '01/15/22' 
+Set TransferDate = '01/15/22'
 where Period >= 202201 and EmployeeEmail in (
 	'reid.wright@pnmac.com '
 	)
 
 
 UPDATE #Final
-Set TransferDate = '04/02/22' 
+Set TransferDate = '04/02/22'
 where Period >= 202204 and EmployeeEmail in (
 	'emily.morris@pnmac.com'
 	,'moses.hernandez@pnmac.com'
@@ -19150,7 +19154,7 @@ where Period >= 202204 and EmployeeEmail in (
 	 )
 
 Update #Final
-Set TransferDate = '12/16/21' 
+Set TransferDate = '12/16/21'
 where Period >= 202112 and EmployeeEmail in (
 	'brad.harley@pnmac.com'
 	,'brittany.gleason@pnmac.com'
@@ -19165,7 +19169,7 @@ where Period >= 202112 and EmployeeEmail in (
 	)
 
 Update #Final
-Set HireDate = '12/16/21' 
+Set HireDate = '12/16/21'
 where Period >= 202112 and EmployeeEmail in (
 	 'caroline.sessa@pnmac.com'
 	,'manushak.marsoubian@pnmac.com'
@@ -19371,7 +19375,7 @@ WHERE EmployeeEmail in (
 and PurchaseFlag ='Y'
 
 UPDATE #Final
-Set TransferDate = '05/01/22' 
+Set TransferDate = '05/01/22'
 where EmployeeEmail in (
 	 'aaron.arce@pnmac.com'
 	,'andrew.abrams@pnmac.com'
@@ -19433,7 +19437,7 @@ where EmployeeEmail in (
 
 
 UPDATE #Final
-Set TransferDate = '06/01/22' 
+Set TransferDate = '06/01/22'
 where Period = 202206 and EmployeeEmail in (
 	 'andrew.simmons@pnmac.com'
 	,'austin.schreibman@pnmac.com'
@@ -19468,7 +19472,7 @@ where Period = 202206 and EmployeeEmail in (
 	 ) and Period >= 202206 and HireDate <= '06/01/2022' and TitleGrouping in ('Account Executive', 'Loan Officer')
 
 UPDATE #Final
-Set TransferDate = '06/01/22' 
+Set TransferDate = '06/01/22'
 where EmployeeEmail in (
      'andrew.simmons@pnmac.com'
     ,'austin.schreibman@pnmac.com'
@@ -19545,12 +19549,12 @@ WHERE EmployeeName = 'Carlos Castro' and LOAEndDate is null
 
 UPDATE #Final
 SET LOAEndDate = '2/10/2020'
-WHERE EmployeeName in ('Jolene Regan', 'Natalia Navarro') 
+WHERE EmployeeName in ('Jolene Regan', 'Natalia Navarro')
 and LOAEndDate is null
 
 UPDATE #Final
 SET LOAEndDate = '4/22/2020'
-WHERE EmployeeName in ('Imelda Sanchez') 
+WHERE EmployeeName in ('Imelda Sanchez')
 and LOAEndDate is null
 and Period >= 202004
 
@@ -19943,7 +19947,7 @@ and Period >= 202205
 
 
 UPDATE #Final
-SET LOAEndDate = '06/08/2022'    
+SET LOAEndDate = '06/08/2022'
 WHERE Period = 202206
 and EmployeeEmail in (
     'paul.yoo@pnmac.com'
@@ -19976,12 +19980,12 @@ SET LOAEndPeriod = rrd.dbo.udf_MonthYear_Int(LOAEndDate)
 
 /*TENURED DATE SECTION*/
 UPDATE #Final
-SET TenuredDate = CASE 
+SET TenuredDate = CASE
 					When TitleGrouping in ('Account Executive','Loan Officer')
 					and TrainingEndDate is not null
 					and TrainingEndDate > ISNULL(TransferDate, '01/01/1900')
 					and TrainingEndDate > ISNULL(LOADate, '01/01/1900') Then
-						CASE 
+						CASE
 							when (PurchaseFlag = 'Y' or NCAFlag = 'Y') and day(TrainingEndDate)<=15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,3,TrainingEndDate))
 							when (PurchaseFlag = 'Y' or NCAFlag = 'Y') and day(TrainingEndDate)>15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,4,TrainingEndDate))
 							when PurchaseFlag= 'N' and day(TrainingEndDate)>15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,3,TrainingEndDate))
@@ -19991,7 +19995,7 @@ SET TenuredDate = CASE
 					and DateDiff(day,LOADate,LOAEndDate)>30
 					and ISNULL(LOADate, '01/01/1900') >= ISNULL(TrainingEndDate, '02/01/1900')
 					and ISNULL(LOADate, '01/01/1900') >= ISNULL(Transferdate, '02/01/1900') then
-						CASE 
+						CASE
 							when (PurchaseFlag = 'Y' or NCAFlag = 'Y') and day(LOAEndDate)<=15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,3,LOAEndDate))
 							when (PurchaseFlag = 'Y' or NCAFlag = 'Y') and day(LOAEndDate)>15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,4,LOAEndDate))
 							when PurchaseFlag= 'N' and day(LOAEndDate)>15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,3,LOAEndDate))
@@ -20002,26 +20006,26 @@ SET TenuredDate = CASE
 					and Transferdate is not null
 					and Transferdate > ISNULL(TrainingEndDate, '01/01/1900')
 					and Transferdate > ISNULL(LOADate, '01/01/1900') then
-						CASE 
+						CASE
 							when (PurchaseFlag = 'Y' or NCAFlag = 'Y') and day(Transferdate)<=15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,3,Transferdate))
 							when (PurchaseFlag = 'Y' or NCAFlag = 'Y') and day(Transferdate)>15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,4,Transferdate))
 							when PurchaseFlag= 'N' and day(Transferdate)>15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,3,Transferdate))
 							when PurchaseFlag= 'N' and day(Transferdate)<=15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,2,Transferdate))
 						end
-					When TitleGrouping in ('Account Executive','Loan Officer') then 
-						CASE 
+					When TitleGrouping in ('Account Executive','Loan Officer') then
+						CASE
 							when (PurchaseFlag = 'Y' or NCAFlag = 'Y') and day(hiredate)<=15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,4,HireDate))
 							when (PurchaseFlag = 'Y' or NCAFlag = 'Y') and day(hiredate)>15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,5,HireDate))
 							when PurchaseFlag= 'N' and day(hiredate)>15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,4,HireDate))
 							when PurchaseFlag= 'N' and day(hiredate)<=15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,3,HireDate))
-						end	
+						end
 					when TitleGrouping = 'Processor' then
 						CASE
 							when DATEPART(d,HireDate) <= 15 then rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,2,HireDate))
 							else rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,3,HireDate))
 						end
 					else rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,2,HireDate))
-	
+
 				end
 
 UPDATE #Final
@@ -20029,41 +20033,41 @@ SET TenuredFlag = case
 					when rrd.dbo.udf_MonthYear_Int(TenuredDate) <= Period then 'Y'
 					else 'N'
 				  end
-			
+
 UPDATE #Final
 SET TenuredNextMoFlag = case
-							when rrd.dbo.udf_MonthYear_Int(Dateadd(m,-1,TenuredDate)) = Period 
+							when rrd.dbo.udf_MonthYear_Int(Dateadd(m,-1,TenuredDate)) = Period
 							then 'Y'
 							else 'N'
 						end
-						
+
 /*ORIGINAL TENURED DATE SECTION*/
 UPDATE #Final
-SET OriginalTenuredDate = CASE 
+SET OriginalTenuredDate = CASE
 					When TitleGrouping in ('Account Executive','Loan Officer')
 						and TrainingEndDate is not null Then
-						CASE 
+						CASE
 							when PurchaseFlag= 'Y' and day(TrainingEndDate)<=15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,3,TrainingEndDate))
 							when PurchaseFlag= 'Y' and day(TrainingEndDate)>15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,4,TrainingEndDate))
 							when PurchaseFlag= 'N' and day(TrainingEndDate)>15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,3,TrainingEndDate))
 							when PurchaseFlag= 'N' and day(TrainingEndDate)<=15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,2,TrainingEndDate))
 						end
-					
-					When TitleGrouping in ('Account Executive','Loan Officer') then 
-						CASE 
+
+					When TitleGrouping in ('Account Executive','Loan Officer') then
+						CASE
 							when PurchaseFlag= 'Y' and day(hiredate)<=15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,4,HireDate))
 							when PurchaseFlag= 'Y' and day(hiredate)>15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,5,HireDate))
 							when PurchaseFlag= 'N' and day(hiredate)>15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,4,HireDate))
 							when PurchaseFlag= 'N' and day(hiredate)<=15 then  rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,3,HireDate))
-						end	
-					
+						end
+
 					when TitleGrouping = 'Processor' then
 						CASE
 							when DATEPART(d,HireDate) <= 15 then rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,2,HireDate))
 							else rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,3,HireDate))
 						end
 					else rrd.dbo.udf_FirstDayOfMonth(DATEADD(m,2,HireDate))
-	
+
 				end
 
 UPDATE #Final
@@ -20071,13 +20075,13 @@ SET OriginalTenuredFlag = case
 					when rrd.dbo.udf_MonthYear_Int(TenuredDate) <= Period then 'Y'
 					else 'N'
 				  end
-			
-				  
-				  
-				  
+
+
+
+
 UPDATE #Final
 SET OriginalTenuredNextMoFlag = case
-							when rrd.dbo.udf_MonthYear_Int(Dateadd(m,-1,TenuredDate)) = Period 
+							when rrd.dbo.udf_MonthYear_Int(Dateadd(m,-1,TenuredDate)) = Period
 							then 'Y'
 							else 'N'
 						end
@@ -20173,11 +20177,11 @@ WHERE EmployeeId = '014206' and AE_NMLS_ID = 2068710
 
 UPDATE F
 SET F.EmploymentStatusDetail = F.EmploymentStatus
-FROM #Final F 
+FROM #Final F
 
 UPDATE F
 SET F.EmploymentStatusDetail = D.EmploymentStatusDetail
-FROM #Final F 
+FROM #Final F
 inner join rrd.dbo.Staffing_EmployeeStatusDetail D
 ON F.EmployeeId = D.EmployeeId and F.Period = D.Period
 WHERE F.EmploymentStatus = 'Active'
