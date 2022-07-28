@@ -67,9 +67,6 @@ From dw_org.dbo.nmls_individual (nolock)
 
 CREATE INDEX IDX_IndividualId ON #AELicense(IndividualId)
 -------------------------------------------------------------------------------------------------------------------------------
-Update #AELicense
-Set OfficerName = 'John Fayad'
-Where OfficerName = 'Nouhad Fayad'
 -------------------------------------------------------------------------------------------------------------------------------
 Update #AELicense
 Set OfficerName = 'Nick Bergh'
